@@ -35,10 +35,20 @@ import GHC.TypeLits
 \end{code}
 %endif
 
+
+\title{ $\dots$ }
+\author{$\dots$}
+\date{\today}
+
+ 
 \begin{document}
-
-\abstract
-
+\begin{titlepage}
+\maketitle
+\thispagestyle{empty}
+\end{titlepage}
+ 
+\begin{abstract}
+  
 The \emph{University Classes Schedule Problem} (\textbf{UCSP})
 consists of finding all the \emph{required disciplines} for each \emph{group}
 at some academic period. It doesn't really matter whether the
@@ -48,6 +58,8 @@ institution. Anyway, the \textbf{primary task} for the ``ants'' is to encounter
 the \emph{required time} of each \emph{required discipline} for each \emph{group}.
 The \textbf{secondary task} is to encounter the solution, that provides the best
 \emph{satisfaction} by the represented persons and the institution.
+
+\end{abstract}
 
 \section{Problem Graph}
 
@@ -151,7 +163,7 @@ assigned at the same day/time.
 \medskip\noindent
 To be completed $\dots$
 
-\subsection{Preferences}
+\subsubsection{Preferences}
 To be done $\dots$
 
 \bigskip
