@@ -36,8 +36,8 @@ import GHC.TypeLits
 %endif
 
 
-\title{ $\dots$ }
-\author{$\dots$}
+\title{ \input{title} }
+\author{ \input {author} }
 \date{\today}
 
  
@@ -165,10 +165,6 @@ To be completed $\dots$
 
 \subsubsection{Preferences}
 To be done $\dots$
-
-\bigskip
-\noindent\rule{\textwidth}{1pt}
-\noindent\rule{\textwidth}{1pt}
 
 \subsection{Notes}
 \begin{itemize}
