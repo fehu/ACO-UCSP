@@ -8,7 +8,7 @@
  \edef\w{0.7cm}
  \pgfmathtruncatemacro\wr{\w+0.4cm}
 
- \def\len{14}
+ \def\len{13}
 
  \tikzstyle{elem}=[draw,minimum height=\h, inner sep=2pt]
 
@@ -41,12 +41,35 @@
    \end{scope}
   }
 
- \node[ draw, fit={(T-i) (R-i)}
+ \node[ draw, double, fit={(T-i) (R-i)}
       , label=below:$\mathrm{Class}_i$
   ] (Ci) {};
 
-\draw [ decorate,decoration={brace,amplitude=10pt}]
-  ($(T-1.north west) + (0,0.3cm)$) -- ($(T-n.north east) + (0,0.3)$)
-  node[midway, yshift=0.25cm, label=above:All classes for all groups];
+ \draw [ decorate,decoration={brace,amplitude=10pt}]
+   ($(T-1.north west) + (0,0.3cm)$) -- ($(T-n.north east) + (0,0.3)$)
+   node[midway, yshift=0.25cm, label=above:Every \emph{class} for each \emph{group}] {};
+
+
+ \def\legend{ T/Time
+            , D/Disciplines
+            , G/Groups
+            , P/Professors
+            , R/Classrooms
+            }
+
+%\\{\footnotesize node}
+
+ \foreach \name/\fullname in \legend
+  \draw[ decorate,decoration={brace,amplitude=3pt}]
+    ($(\name-1.south west) - (0.1cm,2pt)$) -- ($(\name-1.north west) - (0.1cm,-2pt)$)
+    node[midway,left] (N-\name) {};
+%    node[ legend, midway, xshift=0.35cm
+%        , label=left:\emph{\tiny \fullname}] {};
+
+
+ \node[rotate=90, above left=0.5cm and 0.75cm of G-1] (L) { Single node };
+
+ \foreach \i in {T,D,G,P,R}
+  \draw[->, >=stealth] (L) -- (N-\i);
 
 \end{tikzpicture}

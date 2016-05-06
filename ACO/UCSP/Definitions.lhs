@@ -19,7 +19,8 @@
             ifthen, pgffor, calc}
 \usepackage[inline, shortlabels]{enumitem}
 \usepackage[export]{adjustbox}
-\usetikzlibrary{calc, chains, fit, decorations.pathreplacing}
+\usetikzlibrary{calc, chains, fit, positioning, decorations.pathreplacing}
+
 
 \usepackage{showframe}
 
