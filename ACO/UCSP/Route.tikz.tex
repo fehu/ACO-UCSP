@@ -1,0 +1,52 @@
+\begin{tikzpicture}
+
+
+
+% http://www.texample.net/tikz/examples/turing-machine-2/
+
+ \edef\h{0.7cm}
+ \edef\w{0.7cm}
+ \pgfmathtruncatemacro\wr{\w+0.4cm}
+
+ \def\len{14}
+
+ \tikzstyle{elem}=[draw,minimum height=\h, inner sep=2pt]
+
+% http://tex.stackexchange.com/questions/19626/how-to-solve-the-10-09999-rounding-problem-with-pgfmath
+
+ \pgfmathtruncatemacro\middle{\len/2+1}
+ \pgfmathtruncatemacro\middleL{\middle-2}
+ \pgfmathtruncatemacro\middleR{\len-\middle-2}
+
+
+% \def\name{C}
+
+ \foreach \y/\name in {0/T,1/D,2/G,3/P,4/R}
+  {
+   \begin{scope}[ yshift=-\y cm, start chain=going right
+                , node distance=-0.25mm
+                ]
+    
+    \foreach \i in {1,...,\middleL}
+     \node[on chain, elem, minimum width=\w] (\name-\i) { $\mathrm{\name}_{\i}$ };
+     
+    \node[on chain, elem, minimum width=\w] {$\dots$};
+    \node[on chain, elem, minimum width=\w] (\name-i) {$\mathrm{\name}_i$};
+    \node[on chain, elem, minimum width=\w] {$\dots$};
+
+    \foreach \i in {\middleR,...,1}
+     \node[on chain, elem, minimum width=\wr] { $\mathrm{\name}_{n-\i}$ };
+
+    \node[on chain, elem, minimum width=\w] (\name-n) { $\mathrm{\name}_n$ };
+   \end{scope}
+  }
+
+ \node[ draw, fit={(T-i) (R-i)}
+      , label=below:$\mathrm{Class}_i$
+  ] (Ci) {};
+
+\draw [ decorate,decoration={brace,amplitude=10pt}]
+  ($(T-1.north west) + (0,0.3cm)$) -- ($(T-n.north east) + (0,0.3)$)
+  node[midway, yshift=0.25cm, label=above:All classes for all groups];
+
+\end{tikzpicture}

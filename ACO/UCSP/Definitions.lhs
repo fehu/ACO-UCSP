@@ -16,10 +16,10 @@
 
 \usepackage[english]{babel}
 \usepackage{tikz, caption, amsmath, xcolor, subcaption, graphicx,
-            ifthen}
+            ifthen, pgffor, calc}
 \usepackage[inline, shortlabels]{enumitem}
 \usepackage[export]{adjustbox}
-\usetikzlibrary{calc}
+\usetikzlibrary{calc, chains, fit, decorations.pathreplacing}
 
 \usepackage{showframe}
 
@@ -218,25 +218,18 @@ described by the nodes' underlying values. The ``ant'' agent must be capable
 of selecting exactly one node of each role. The selection order doesn't matter.
 
 
-
-% The route begins to make sense when a \emph{time} node is aggregated.
-
-\TODO
-
-
-
- 
-% The central part  important role for 
-
-% Each node pair in route has it's own meaning:
-% \begin{itemize}[leftmargin=2cm]
-%   \item 
-% \end{itemize}
-
 \medskip\noindent
 A complete route (through all the layers) describes 
 a \emph{solution candidate}: some schedule, that holds a
 list of \emph{classes}.
+
+\begin{figure}[h]
+  \centering
+  \input{Route.tikz}  
+  \caption{\emph{Route} decomposition.}
+  \label{fig:route}
+\end{figure}
+
 
 \begin{code}
   
