@@ -1,41 +1,41 @@
 \begin{tikzpicture}
- 
- \foreach \g in {1,...,6}
-  \node (G\g) at ($(2*\g, 0)$) {$G_\g$};
-
- \foreach \d in {1,...,6}
-  \node (D\d) at ($(2*\d, -1)$) {$D_\d$};
 
  \foreach \t in {1,...,12}
-  \node (T\t) at (\t, -4) {$T_{\t}$};
+  \node (T\t) at ($(0.5+\t, 0)$) {$T_{\t}$};
+
+ \foreach \d in {1,...,6}
+  \node (D\d) at ($(2*\d, -3)$) {$D_\d$};
+
+ \foreach \g in {1,...,6}
+  \node (G\g) at ($(2*\g, -5)$) {$G_\g$};
 
  \foreach \p in {1,...,6}
   \node (P\p) at ($(2*\p, -7)$) {$P_\p$};
 
  \foreach \r in {1,...,6}
-  \node (R\r) at ($(2*\r, -8)$) {$R_\r$};
+  \node (R\r) at ($(2*\r, -9)$) {$R_\r$};
 
-  \foreach \g in {1,...,6}
-   \foreach \d in {1,...,6}
-    \draw (G\g) -- (D\d);
- 
+
+ \foreach \t in {1,...,12}
   \foreach \d in {1,...,6}
-   \foreach \t in {1,...,12}
-    \draw (D\d) -- (T\t);
+   \draw (T\t) -- (D\d);    
 
+ \foreach \g in {1,...,6}
+  \foreach \d in {1,...,6}
+   \draw (G\g) -- (D\d);
+ 
+ \foreach \g in {1,...,6}
   \foreach \p in {1,...,6}
-   \foreach \t in {1,...,12}
-    \draw (P\p) -- (T\t);    
-    
+   \draw (G\g) -- (P\p);
 
-  \foreach \p in {1,...,6}
-   \foreach \r in {1,...,6}
-    \draw (P\p) -- (R\r);        
+ \foreach \p in {1,...,6}
+  \foreach \r in {1,...,6}
+   \draw (P\p) -- (R\r);        
 
 
-\draw[red, line width=0.25mm] (G1) -- (D3) -- (T5) -- (P1) -- (R6);
-\draw[blue, line width=0.25mm] (G1) -- (D6) -- (T8) -- (P4) -- (R6);
-\draw[green, line width=0.25mm] (G5) -- (D6) -- (T11) -- (P2) -- (R4);
-\draw[yellow, line width=0.25mm] (G5) -- (D2) -- (T5) -- (P3) -- (R2);
+ \draw[red, line width=0.25mm] (T5) -- (D3) -- (G1) -- (P1) -- (R6);
+ \draw[blue, line width=0.25mm] (T8) -- (D6) -- (G1) -- (P4) -- (R6);
+ \draw[green, line width=0.25mm] (T11) -- (D6) -- (G5) -- (P2) -- (R4);
+ \draw[yellow, line width=0.25mm] (T5) -- (D2) -- (G5) -- (P3) -- (R2);
 
 \end{tikzpicture}

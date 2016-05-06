@@ -15,12 +15,18 @@
 
 
 \usepackage[english]{babel}
-\usepackage{tikz, caption, amsmath}
+\usepackage{tikz, caption, amsmath, xcolor, subcaption, graphicx,
+            ifthen}
 \usepackage[inline, shortlabels]{enumitem}
+\usepackage[export]{adjustbox}
 \usetikzlibrary{calc}
 
+\usepackage{showframe}
 
-%\newcommand{\abstract}{\textbf{\textit{\large{Abstract}}}}
+
+\newcommand{\red}[1]{{\color{red} #1}}
+\newcommand{\TODO}{\red{\Large TODO}}
+ 
  
 %if False
 \begin{code}
@@ -28,29 +34,36 @@
 module ACO.UCSP.Definitions where
 
 import Data.Set (Set)
+import qualified Data.Set as Set 
 
--- import TypeNum.Nat
-import GHC.TypeLits
+import Data.List (permutations)
 
 \end{code}
 %endif
 
+\provideboolean{showName}
+\setboolean{showName}{false}
 
-\title{ \input{title} }
-\author{ \input {author} }
-\date{\today}
-
+\ifthenelse{ \boolean{showName} }
+           { \input{private} }
+           { \def\myId{\rule{6em}{1pt}}
+             \def\myName{Dmitry K.}
+           }
+\input{title}
+ 
  
 \begin{document}
+ 
 \begin{titlepage}
 \maketitle
 \thispagestyle{empty}
 \end{titlepage}
+
  
 \begin{abstract}
   
 The \emph{University Classes Schedule Problem} (\textbf{UCSP})
-consists of finding all the \emph{required disciplines} for each \emph{group}
+consists in finding all the \emph{required disciplines} for each \emph{group}
 at some academic period. It doesn't really matter whether the
 \emph{disciplines} are chosen by the students or assigned by the
 institution. Anyway, the \textbf{primary task} for the ``ants'' is to encounter
@@ -58,9 +71,9 @@ institution. Anyway, the \textbf{primary task} for the ``ants'' is to encounter
 the \emph{required time} of each \emph{required discipline} for each \emph{group}.
 The \textbf{secondary task} is to encounter the solution, that provides the best
 \emph{satisfaction} by the represented persons and the institution.
-
+ 
 \end{abstract}
-
+ 
 \section{Problem Graph}
 
 \begin{figure}[h]
@@ -86,16 +99,22 @@ types of entities, denoted as \emph{roles}:
 
 Each of the roles must have a finite and non-empty domain, therefore ensuring
 finite number of unique permutations.
- 
-\noindent
-``A class of \emph{discipline} was assigned for \emph{group}.
-  It's taught by \emph{professor} in \emph{classroom} at \emph{time}
-  on \emph{day}.''
 
+\begin{figure}[h]
+  \centering
+  \input{Class.tikz} 
+  \caption{\emph{Class} structure.}
+  \label{fig:class}
+\end{figure}
+
+
+ 
 \begin{code}
 
+-- Used as \textbf{kind} (see \emph{data type promotion})
 data Role = Groups | Disciplines | Time | Professors | Classrooms
 
+-- 'Role' kind container
 data Role' (r :: Role) = Role'
 
     
@@ -110,8 +129,77 @@ depending on the corresponding \emph{role}.
 The nodes at some layer have exactly the same underlying size and it's the
 power of it's domain set.
 
+\begin{code}
+
+type family RoleValue (r :: Role) :: *
+ 
+class HasDomain a v | a -> v
+  where  domain       :: a -> Set v
+         domainPower  :: a -> Int
+
+newtype Node (r :: Role) = Node [RoleValue r]
+
+mkNodes ::  HasDomain (Role' r) (RoleValue r) =>
+            Role' r ->  [Node r]
 
 
+mkNodes = map Node . permutations . Set.toList . domain
+
+\end{code}
+
+
+\subsubsection{Timetable}
+A \emph{timetable} holds schedule for one week,
+that repeats throughout the academic period.
+The \emph{timetable} is actually a table:
+the columns represent days of week; the rows --- discrete time intervals.
+Actual timetable structure may vary, as can be seen in figure
+\ref{fig:timetables}.
+
+\begin{figure}[h]
+  \centering
+
+  \begin{subfigure}{\textwidth}
+    \centering
+    \begin{tabular}{||c||c||c||c||c||c||c||}
+      \hline
+      ~ & Mon & Tue & Wed & Thu & Fri & Sat \\ \hline
+      08:30 -- 09:00 & ~ & ~ & ~ & ~ & ~ & ~ \\ \hline
+      09:00 -- 09:30 & ~ & ~ & ~ & ~ & ~ & ~ \\ \hline
+      09:30 -- 10:00 & ~ & ~ & ~ & ~ & ~ & ~ \\ \hline
+      10:00 -- 10:30 & ~ & ~ & ~ & ~ & ~ & ~ \\ \hline
+      10:30 -- 11:00 & ~ & ~ & ~ & ~ & ~ & ~ \\ \hline
+      11:00 -- 11:30 & ~ & ~ & ~ & ~ & ~ & ~ \\ \hline
+      11:30 -- 12:00 & ~ & ~ & ~ & ~ & ~ & ~ \\ \hline
+      \vdots \qquad\quad \vdots & ~ & ~ & ~ & ~ & ~ & ~ \\ \hline
+    \end{tabular}
+
+    \caption{Timetable without recesses.}
+  \end{subfigure}
+
+  \begin{subfigure}{\textwidth}
+    \centering
+    \begin{tabular}{||c||c||c||c||c||c||c||}
+      \hline
+      ~ & Mon & Tue & Wed & Thu & Fri & Sat \\ \hline
+      08:30 -- 09:10 & ~ & ~ & ~ & ~ & ~ & ~ \\ \hline
+      09:15 -- 09:55 & ~ & ~ & ~ & ~ & ~ & ~ \\ \hline
+      10:05 -- 10:45 & ~ & ~ & ~ & ~ & ~ & ~ \\ \hline
+      10:50 -- 11:30 & ~ & ~ & ~ & ~ & ~ & ~ \\ \hline
+      11:40 -- 12:20 & ~ & ~ & ~ & ~ & ~ & ~ \\ \hline
+      12:25 -- 13:05 & ~ & ~ & ~ & ~ & ~ & ~ \\ \hline
+      13:15 -- 13:55 & ~ & ~ & ~ & ~ & ~ & ~ \\ \hline
+      \vdots \qquad\quad \vdots & ~ & ~ & ~ & ~ & ~ & ~ \\ \hline
+    \end{tabular}
+
+    \caption{Timetable with recesses.}
+  \end{subfigure}
+
+  \caption{Possible \emph{timetable} structures. }
+  \label{fig:timetables}
+\end{figure}
+
+ 
 \subsection{Graph Edges}
 
 The edges are possible routes, that can be taken by an ``ant''. They connect
@@ -120,22 +208,43 @@ nodes, belonging to \emph{different layers}.
 \begin{align*}  
    \forall & a \in \mathrm{Layer}_A \\
    \forall & b \in \mathrm{Layer}_B \\
-   & \mbox {if } \mathrm{Layer}_A \text{ and } \mathrm{Layer}_B \text{ are neighbors} \\
-   &\quad  \exists \mbox{ an edge between } a \text{ and } b.
+   &\mbox {if } \mathrm{Layer}_A \text{ and } \mathrm{Layer}_B \text{ are neighbors} \\
+   &\quad \exists \text{ an edge between } a \text{ and } b.
 \end{align*}
 
 A selection of some sub-route, connecting some nodes $A_i$ and $B_j$ (from some layers
 $A$ and $B$) means that the ant ``proposes'' a (partial) solution, that is
-described by the nodes' underlying values.
+described by the nodes' underlying values. The ``ant'' agent must be capable
+of selecting exactly one node of each role. The selection order doesn't matter.
+
+
+
+% The route begins to make sense when a \emph{time} node is aggregated.
+
+\TODO
+
+
+
+ 
+% The central part  important role for 
+
+% Each node pair in route has it's own meaning:
+% \begin{itemize}[leftmargin=2cm]
+%   \item 
+% \end{itemize}
 
 \medskip\noindent
-A complete route (through all the layers) describes some schedule ---
-a \emph{solution candidate}.
+A complete route (through all the layers) describes 
+a \emph{solution candidate}: some schedule, that holds a
+list of \emph{classes}.
 
+\begin{code}
+  
+\end{code}
 
 \subsection{Assessing Candidates}
 
-$$ \eta = \eta(\lbrace r_i \rbrace_{i=1}^{n-1}, r_n ) =
+$$ \eta = \eta( \lbrace r_i \rbrace_{i=1}^{n-1}, r_n ) =
 \begin{cases}
   0 & \mbox{if }  \text{any restriction is broken} \\
   \mathrm{preference(\lbrace r_i \rbrace_{i=1}^n)} & \mbox{otherwise}
@@ -166,50 +275,60 @@ To be completed $\dots$
 \subsubsection{Preferences}
 To be done $\dots$
 
-\subsection{Notes}
-\begin{itemize}
-  \item Each role has a domain of known size.
-  \item The relations must respect the powers of nodes underlying domains.
-\end{itemize}
+
+
  
 
           
-\section{Implementation}
+% \section{Implementation}
 
-Uses \emph{type-level} natural numbers to denote the domain sizes and
-      ensure correct dimensions for all the operations over the domains
-      and nodes.
- 
-\begin{code}
-
-data family IList (n :: Nat) a :: *
--- data instance IList 0 a = INil -- TODO
--- data instance IList (n) a = a :. (IList n a)
- 
-type (=|) = IList 0
 
  
-class KnownDomain a (len :: Nat) val | a -> val
-  where  -- The uniqueness of domain values cannot be checked at
-         -- compile time, therefore it's programmer's responsibility to
-         -- ensure it.
-         domain :: a -> IList len val
+% Uses \emph{type-level} natural numbers to denote the domain sizes and
+%       ensure correct dimensions for all the operations over the domains
+%       and nodes.
+ 
 
---         --------------------------------------------------------
+% type family NatPrev (n :: Nat) :: Maybe Nat
+%   where NatPrev 0 = Nothing
+%         NatPrev n = Just (n-1)
 
-type family RoleValue (r :: Role) :: *
-type family RolePower (r :: Role) :: Nat
+ 
+% data family IList' (prev :: Maybe Nat) a :: *
+     
+% data instance IList' Nothing a   = INil
+% data instance IList' (Just n) a  = ISucc a (IList' (NatPrev n) a)
 
-type RoleDomain (r :: Role) = KnownDomain (Role' r) (RolePower r) (RoleValue r) 
+% type IList (n :: Nat) = IList' (NatPrev n)
+                                   
+% type (=|) = IList 0
+% type (:.) a l = ISucc a l
 
 
-data Node (r :: Role) = Node ()
+
+ 
+% class KnownDomain a (len :: Nat) val | a -> val
+%   where  -- The uniqueness of domain values cannot be checked at
+%          -- compile time, therefore it's programmer's responsibility to
+%          -- ensure it.
+%          domain :: a -> IList len val
+
+%         --------------------------------------------------------
+
+% type family RoleValue (r :: Role) :: *
+% type family RolePower (r :: Role) :: Nat
+
+% type RoleDomain (r :: Role) = KnownDomain  (Role' r)
+%                                            (RolePower r)
+%                                            (RoleValue r) 
+
+
+% data Node (r :: Role) = Node ()
 
             
-\end{code}
 
-\medskip\noindent
-To be completed $\dots$
+% \medskip\noindent
+% To be completed $\dots$
  
 \end{document}
 
