@@ -16,7 +16,7 @@
 
 \usepackage[english]{babel}
 \usepackage{tikz, caption, amsmath, xcolor, subcaption, graphicx,
-            ifthen, pgffor, calc}
+            ifthen, pgffor, calc, relsize}
 \usepackage[inline, shortlabels]{enumitem}
 \usepackage[export]{adjustbox}
 \usetikzlibrary{calc, chains, fit, positioning,
@@ -291,15 +291,40 @@ Let's denote
    \\
  \item[$D_g =$] $\lbrace d ~||~ N_d^g \not= 0 \rbrace_{d \in D}$ --- set of
    disciplines, assigned to group $g$;
- \item[$N_T^\Sigma =$] $\sum\limits_{g \in G}~\sum\limits_{d \in D_g} N_d^g$ ---
+ \item[$N_\Sigma =$] $\sum\limits_{g \in G}~\sum\limits_{d \in D_g} N_d^g$ ---
    total number of classes time periods per week.
 \end{itemize}
  
 
 \subsection{Problem Dimensions}
 
+\subsubsection{Groups}
+ 
+Let $G'$ be a list of groups of length $N_\Sigma$,
+such that $$ \forall g \in G' \implies \mathrm{count}(g) =
+\sum\limits_{d \in D} N_d^g $$
 
-          
+Unique groups permutations:
+\begin{align*}
+  & \mathlarger{\prod}\limits_{i=1}^{N_G} \dbinom{ N_G - \sum\limits_{j=1}^{i-1} n_j }{n_i} \\
+= & \binom{N}{n_1} \binom{N-n_1}{n_2} \binom{N-n_1-n_2}{n_3}\dots
+    \binom{N-n_1-\dots-n_{N-1}}{n_N}
+\end{align*}
+\qquad where $n_i = \sum\limits_{d \in D} N_d^{g_i}$.
+
+\subsubsection{Professors and Classrooms}
+ 
+With no optimization applied, exists $\dbinom{N_\Sigma + N - 1}{N_\Sigma - 1}$
+(combinations with repetitions), where $N=N_P$ or $N_R$.
+
+Some invalid instances can be discarded, such that, for example, don't have
+enough professors capable of teaching some discipline; or classrooms
+configurations that won't fit all the students etc.
+
+\subsubsection{Disciplines}
+ \todo
+  \red{ generate pairs group-discipline at once! }
+  
 % \section{Implementation}
 
 
