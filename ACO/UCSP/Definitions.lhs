@@ -19,7 +19,9 @@
             ifthen, pgffor, calc}
 \usepackage[inline, shortlabels]{enumitem}
 \usepackage[export]{adjustbox}
-\usetikzlibrary{calc, chains, fit, positioning, decorations.pathreplacing}
+\usetikzlibrary{calc, chains, fit, positioning,
+                decorations.pathreplacing
+               }
 
 
 \usepackage{showframe}
@@ -27,6 +29,8 @@
 
 \newcommand{\red}[1]{{\color{red} #1}}
 \newcommand{\TODO}{\red{\Large TODO}}
+
+\newcommand{\tbc}{\medskip\noindent \red{To be completed \dots}}
  
  
 %if False
@@ -75,7 +79,7 @@ The \textbf{secondary task} is to encounter the solution, that provides the best
  
 \end{abstract}
  
-\section{Problem Graph}
+\section{Problem}
 
 \begin{figure}[h]
   \centering
@@ -251,27 +255,49 @@ $$
 There are two kinds of restrictions: over \emph{time} and over
 \emph{capabilities.}
 
-The capabilities represent:
-\begin{itemize}[leftmargin=2.5cm]
+Time restriction require the schedule to be \emph{time consistent}:
+no group, professor and classroom can have two different classes,
+assigned at the same day/time. The capabilities represent:
+\begin{itemize}[leftmargin=3.5cm]
   \item[Group:] Disciplines needed (searched).
   \item[Professors:] Known disciplines (that can be taught).
   \item[Classrooms:] Special requirements (labs etc.); students capacity.
 \end{itemize}
 
-\medskip
-Time restriction require the schedule to be \emph{time consistent}:
-no group, professor and classroom can have two different classes,
-assigned at the same day/time.
-
-\medskip\noindent
-To be completed $\dots$
 
 \subsubsection{Preferences}
-To be done $\dots$
+\tbc
 
 
-
+\section{Formalization}
  
+
+Let's denote
+\begin{itemize}[leftmargin=2cm]
+ \item[$N_G$ ---] number of groups;
+ \item[$N_P$ ---] number of professors;
+ \item[$N_R$ ---] number of classrooms;
+ \item[$N_D$ ---] number of disciplines;
+ \item[$N_T$ ---] number of \emph{time periods} per week:\\
+                  $\mathrm{number~of} \mathit{~time~periods} \mathrm{~per~day}
+                   \times \mathrm{number~of} \mathit{~days}$;
+ \item[$N_d^g$ ---] number of \emph{time periods} of discipline $d$,
+                    assigned for group $g$;
+   \\
+ \item[$G =$] $\lbrace g_i \rbrace_{i=1}^{N_G}$ --- set of groups;
+ \item[$D =$] $\lbrace d_i \rbrace_{i=1}^{N_D}$ --- set of disciplines;
+ \item[$P =$] $\lbrace p_i \rbrace_{i=1}^{N_P}$ --- set of professors;
+ \item[$R =$] $\lbrace r_i \rbrace_{i=1}^{N_R}$ --- set of classrooms;
+   \\
+ \item[$D_g =$] $\lbrace d ~||~ N_d^g \not= 0 \rbrace_{d \in D}$ --- set of
+   disciplines, assigned to group $g$;
+ \item[$N_T^\Sigma =$] $\sum\limits_{g \in G}~\sum\limits_{d \in D_g} N_d^g$ ---
+   total number of classes time periods per week.
+\end{itemize}
+ 
+
+\subsection{Problem Dimensions}
+
 
           
 % \section{Implementation}
