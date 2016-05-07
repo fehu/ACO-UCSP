@@ -315,22 +315,28 @@ This number may be diminished by
 
 \crule{0.75}
 \bigskip\noindent
-Total combinations (worst case): $$
+Total combinations (worst case):
+\begin{equation}
+ \label{eq:totalN}
  \dbinom{N_\Sigma + N_P - 1}{N_\Sigma - 1}
  \dbinom{N_\Sigma + N_R - 1}{N_\Sigma - 1}
  \dbinom{N_\Sigma + N_T - 1}{N_\Sigma - 1}
- N_\Sigma! $$
+ N_\Sigma!
+\end{equation}
+
 
 
 
 \subsection{Assessing Candidates}
-
-$$ \eta = \eta( \lbrace r_i \rbrace_{i=1}^{n-1}, r_n ) =
-\begin{cases}
+\begin{equation}
+ \label{eq:eta}
+ \eta = \eta( \lbrace r_i \rbrace_{i=1}^{n-1}, r_n ) =
+ \begin{cases}
   0 & \mbox{if }  \text{any restriction is broken} \\
-  \mathrm{preference(\lbrace r_i \rbrace_{i=1}^n)} & \mbox{otherwise}
-\end{cases}
-$$
+  \mathrm{pref}(\lbrace r_i \rbrace_{i=1}^n) & \mbox{otherwise}
+ \end{cases}
+\end{equation}
+
 \qquad where $r_i$ is some some sub-route.
  
 \subsubsection{Restrictions}
@@ -362,7 +368,14 @@ $$\mathrm{pref}(r) =
        {3}$$
                                                                    
 
+\section{\red{Questions}}
 
+\begin{enumerate}
+ \item Would it be possible to handle (\ref{eq:totalN}) routes?
+ \item Is it OK that a broken restriction results in $0$ in (\ref{eq:eta}),
+       or should there be a grade of ``validness''?
+ \item Is the definition OK in general?
+\end{enumerate}
  
 % \section{Implementation}
 
