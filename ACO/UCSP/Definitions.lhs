@@ -26,6 +26,7 @@
 
 \usepackage{showframe}
 
+\newcommand{\crule}[2][1pt]{\begin{center}\rule{#2\textwidth}{#1}\end{center}}
 
 \newcommand{\red}[1]{{\color{red} #1}}
 \newcommand{\TODO}{\red{\Large TODO}}
@@ -95,8 +96,7 @@ The \textbf{secondary task} is to encounter the solution, that provides the best
 A \emph{class} is an event, that links together the following
 types of entities, denoted as \emph{roles}:
 \begin{enumerate}
- \item groups
- \item disciplines
+ \item group-discipline pairs
  \item day/time
  \item professors
  \item classrooms
@@ -117,7 +117,7 @@ finite number of unique permutations.
 \begin{code}
 
 -- Used as \textbf{kind} (see \emph{data type promotion})
-data Role = Groups | Disciplines | Time | Professors | Classrooms
+data Role = Groups | Time | Professors | Classrooms
 
 -- 'Role' kind container
 data Role' (r :: Role) = Role'
@@ -240,33 +240,6 @@ list of \emph{classes}.
   
 \end{code}
 
-\subsection{Assessing Candidates}
-
-$$ \eta = \eta( \lbrace r_i \rbrace_{i=1}^{n-1}, r_n ) =
-\begin{cases}
-  0 & \mbox{if }  \text{any restriction is broken} \\
-  \mathrm{preference(\lbrace r_i \rbrace_{i=1}^n)} & \mbox{otherwise}
-\end{cases}
-$$
-\qquad where $r_i$ is some some sub-route.
- 
-\subsubsection{Restrictions}
-
-There are two kinds of restrictions: over \emph{time} and over
-\emph{capabilities.}
-
-Time restriction require the schedule to be \emph{time consistent}:
-no group, professor and classroom can have two different classes,
-assigned at the same day/time. The capabilities represent:
-\begin{itemize}[leftmargin=3.5cm]
-  \item[Group:] Disciplines needed (searched).
-  \item[Professors:] Known disciplines (that can be taught).
-  \item[Classrooms:] Special requirements (labs etc.); students capacity.
-\end{itemize}
-
-
-\subsubsection{Preferences}
-\tbc
 
 
 \section{Formalization}
@@ -298,19 +271,25 @@ Let's denote
 
 \subsection{Problem Dimensions}
 
-\subsubsection{Groups}
- 
-Let $G'$ be a list of groups of length $N_\Sigma$,
-such that $$ \forall g \in G' \implies \mathrm{count}(g) =
-\sum\limits_{d \in D} N_d^g $$
+\subsubsection{Groups and Disciplines}
 
-Unique groups permutations:
-\begin{align*}
-  & \mathlarger{\prod}\limits_{i=1}^{N_G} \dbinom{ N_G - \sum\limits_{j=1}^{i-1} n_j }{n_i} \\
-= & \binom{N}{n_1} \binom{N-n_1}{n_2} \binom{N-n_1-n_2}{n_3}\dots
-    \binom{N-n_1-\dots-n_{N-1}}{n_N}
-\end{align*}
-\qquad where $n_i = \sum\limits_{d \in D} N_d^{g_i}$.
+Let $G'$ be a list of pairs $\langle\mathrm{group},\mathrm{discipline}\rangle$
+of length $N_\Sigma$, such that
+$\forall \langle g,d \rangle \in G' \implies
+ \mathrm{count}_{G'}(\langle g,d \rangl) = N_d^g$.
+There are $N_\Sigma!$ unique permutations.
+
+% Let $G'$ be a list of groups of length $N_\Sigma$,
+% such that $$ \forall g \in G' \implies \mathrm{count}(g) =
+% \sum\limits_{d \in D} N_d^g $$
+
+% Unique groups permutations:
+% \begin{align*}
+%   & \mathlarger{\prod}\limits_{i=1}^{N_G} \dbinom{ N_G - \sum\limits_{j=1}^{i-1} n_j }{n_i} \\
+% = & \binom{N}{n_1} \binom{N-n_1}{n_2} \binom{N-n_1-n_2}{n_3}\dots
+%     \binom{N-n_1-\dots-n_{N-1}}{n_N}
+% \end{align*}
+% \qquad where $n_i = \sum\limits_{d \in D} N_d^{g_i}$.
 
 \subsubsection{Professors and Classrooms}
  
@@ -321,10 +300,70 @@ Some invalid instances can be discarded, such that, for example, don't have
 enough professors capable of teaching some discipline; or classrooms
 configurations that won't fit all the students etc.
 
-\subsubsection{Disciplines}
- \todo
-  \red{ generate pairs group-discipline at once! }
-  
+\subsubsection{Day and Time}
+
+In general case, any day and time may be assigned for any class period,
+including repetitions, that yields $\dbinom{N_\Sigma + N_T - 1}{N_\Sigma - 1}$
+possible combinations.
+
+This number may be diminished by
+\begin{itemize}
+ \item joining class periods;
+ \item requiring a minimum entropy.
+\end{itemize}
+
+
+\crule{0.75}
+\bigskip\noindent
+Total combinations (worst case): $$
+ \dbinom{N_\Sigma + N_P - 1}{N_\Sigma - 1}
+ \dbinom{N_\Sigma + N_R - 1}{N_\Sigma - 1}
+ \dbinom{N_\Sigma + N_T - 1}{N_\Sigma - 1}
+ N_\Sigma! $$
+
+
+
+\subsection{Assessing Candidates}
+
+$$ \eta = \eta( \lbrace r_i \rbrace_{i=1}^{n-1}, r_n ) =
+\begin{cases}
+  0 & \mbox{if }  \text{any restriction is broken} \\
+  \mathrm{preference(\lbrace r_i \rbrace_{i=1}^n)} & \mbox{otherwise}
+\end{cases}
+$$
+\qquad where $r_i$ is some some sub-route.
+ 
+\subsubsection{Restrictions}
+
+There are two kinds of restrictions: over \emph{time} and over
+\emph{capabilities.}
+
+Time restriction require the schedule to be \emph{time consistent}:
+no group, professor and classroom can have two different classes,
+assigned at the same day/time. The capabilities represent:
+\begin{itemize}[leftmargin=3.5cm]
+  \item[Group:] Disciplines needed (searched).
+  \item[Professors:] Known disciplines (that can be taught).
+  \item[Classrooms:] Special requirements (labs etc.); students capacity.
+\end{itemize}
+
+
+\subsubsection{Preferences}
+
+Preferences create an order over \emph{valid candidates}, that permits
+the algorithm to optimize them. The preferences might vary for each
+entity (group, professor, classroom), but they all must have a form of
+function: $$ \mathrm{pref'}[E] : \langle \mathrm{discipline},\mathrm{day/time} \rangle
+\mapsto [0,1]$$
+
+The preference value for a \emph{complete route}:
+$$\mathrm{pref}(r) =
+ \dfrac{\mathrm{pref'}[G](r) + \mathrm{pref'}[P](r) + \mathrm{pref'}[R](r)}
+       {3}$$
+                                                                   
+
+
+ 
 % \section{Implementation}
 
 
