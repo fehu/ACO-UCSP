@@ -1,38 +1,12 @@
-\documentclass{article}
-
-%include polycode.fmt
-
-%format family = "\textbf{family}"
-
-%format `union` = "\cup"
-%format `compare` = "\lesseqqgtr"
-%format `member` = "\in"
-
-%format <|> = "\mathrel{\mathord{<}\mathord{|}\mathord{>}}"
-%format <$> = "\mathrel{\mathord{<}\mathord{\$}\mathord{>}}"
-%format <*> = "\mathrel{\mathord{<}\mathord{*}\mathord{>}}"
-%format &&& = "\mathrel{\mathord{\&}\mathord{\&}\mathord{\&}}"
+%if standalone
+ \input{header}
+ %include format.tex
+ \begin{document}
+%endif    
 
 
-\usepackage[english]{babel}
-\usepackage{tikz, caption, amsmath, xcolor, subcaption, graphicx,
-            ifthen, pgffor, calc, relsize}
-\usepackage[inline, shortlabels]{enumitem}
-\usepackage[export]{adjustbox}
-\usetikzlibrary{calc, chains, fit, positioning,
-                decorations.pathreplacing
-               }
 
-
-\usepackage{showframe}
-
-\newcommand{\crule}[2][1pt]{\begin{center}\rule{#2\textwidth}{#1}\end{center}}
-
-\newcommand{\red}[1]{{\color{red} #1}}
-\newcommand{\TODO}{\red{\Large TODO}}
-
-\newcommand{\tbc}{\medskip\noindent \red{To be completed \dots}}
- 
+\section{Problem}
  
 %if False
 \begin{code}
@@ -47,40 +21,7 @@ import Data.List (permutations)
 \end{code}
 %endif
 
-\provideboolean{showName}
-\setboolean{showName}{false}
-
-\ifthenelse{ \boolean{showName} }
-           { \input{private} }
-           { \def\myId{\rule{6em}{1pt}}
-             \def\myName{Dmitry K.}
-           }
-\input{title}
  
- 
-\begin{document}
- 
-\begin{titlepage}
-\maketitle
-\thispagestyle{empty}
-\end{titlepage}
-
- 
-\begin{abstract}
-  
-The \emph{University Classes Schedule Problem} (\textbf{UCSP})
-consists in finding all the \emph{required disciplines} for each \emph{group}
-at some academic period. It doesn't really matter whether the
-\emph{disciplines} are chosen by the students or assigned by the
-institution. Anyway, the \textbf{primary task} for the ``ants'' is to encounter
-\textbf{valid} configurations of \emph{classes}, such that provide exactly
-the \emph{required time} of each \emph{required discipline} for each \emph{group}.
-The \textbf{secondary task} is to encounter the solution, that provides the best
-\emph{satisfaction} by the represented persons and the institution.
- 
-\end{abstract}
- 
-\section{Problem}
 
 \begin{figure}[h]
   \centering
@@ -368,71 +309,14 @@ $$\mathrm{pref}(r) =
        {3}$$
                                                                    
 
-\section{\red{Questions}}
-
-\begin{enumerate}
- \item Would it be possible to handle (\ref{eq:totalN}) routes?
- \item Is it OK that a broken restriction results in $0$ in (\ref{eq:eta}),
-       or should there be a grade of ``validness''?
- \item Is the definition OK in general?
-\end{enumerate}
- 
-% \section{Implementation}
-
-
- 
-% Uses \emph{type-level} natural numbers to denote the domain sizes and
-%       ensure correct dimensions for all the operations over the domains
-%       and nodes.
- 
-
-% type family NatPrev (n :: Nat) :: Maybe Nat
-%   where NatPrev 0 = Nothing
-%         NatPrev n = Just (n-1)
-
- 
-% data family IList' (prev :: Maybe Nat) a :: *
-     
-% data instance IList' Nothing a   = INil
-% data instance IList' (Just n) a  = ISucc a (IList' (NatPrev n) a)
-
-% type IList (n :: Nat) = IList' (NatPrev n)
-                                   
-% type (=|) = IList 0
-% type (:.) a l = ISucc a l
-
-
-
- 
-% class KnownDomain a (len :: Nat) val | a -> val
-%   where  -- The uniqueness of domain values cannot be checked at
-%          -- compile time, therefore it's programmer's responsibility to
-%          -- ensure it.
-%          domain :: a -> IList len val
-
-%         --------------------------------------------------------
-
-% type family RoleValue (r :: Role) :: *
-% type family RolePower (r :: Role) :: Nat
-
-% type RoleDomain (r :: Role) = KnownDomain  (Role' r)
-%                                            (RolePower r)
-%                                            (RoleValue r) 
-
-
-% data Node (r :: Role) = Node ()
-
-            
-
-% \medskip\noindent
-% To be completed $\dots$
- 
-\end{document}
-
+%if standalone
+ \end{document}
+%endif    
 
 
 %%% Local Variables:
 %%% latex-build-command: "lhsTeX"
+%%% lhs-build-standalone-flag: t
 %%% eval: (haskell-indentation-mode)
 %%% eval: (when (not (haskell-session-maybe)) (haskell-session-change))
 %%% eval: (load (concat (file-name-as-directory (projectile-project-root)) "publish-pdf.el"))

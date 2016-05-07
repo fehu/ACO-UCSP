@@ -1,0 +1,19 @@
+\documentclass{article}
+
+\usepackage[english]{babel}
+\usepackage{tikz, caption, amsmath, xcolor, subcaption, graphicx,
+            ifthen, pgffor, calc, relsize}
+\usepackage[inline, shortlabels]{enumitem}
+\usepackage[export]{adjustbox}
+\usetikzlibrary{calc, chains, fit, positioning,
+                decorations.pathreplacing
+               }
+
+
+\newcommand{\crule}[2][1pt]{\begin{center}\rule{#2\textwidth}{#1}\end{center}}
+
+\newcommand{\red}[1]{{\color{red} #1}}
+\newcommand{\TODO}{\red{\Large TODO}}
+
+\newcommand{\tbc}{\medskip\noindent \red{To be completed \dots}}
+
