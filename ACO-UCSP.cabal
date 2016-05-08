@@ -13,11 +13,20 @@ maintainer:          -
 -- copyright:           
 -- category:            
 build-type:          Simple
--- extra-source-files:  
+
+extra-source-files:  README.md
+                     ACO/UCSP/README.md
+                     ACO/UCSP/TeX/*.tex
+                     ACO/UCSP/TeX/tikz/*.tikz.tex
+                     ACO/UCSP/TeX/etc/*.tex
+                     ACO/UCSP/TeX/etc/*.fmt
+                     ACO/UCSP/Document.lhs
+
 cabal-version:       >=1.10
 
 library
   exposed-modules:     ACO.UCSP.Definitions
+                       ACO.UCSP.Implementation
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.8 && <4.9

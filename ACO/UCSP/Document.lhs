@@ -27,10 +27,9 @@
 
 
 
-\input{abstract}
+\input{Abstract}
 %include Definitions.lhs
-\section{Implementation}
-%include Graph.lhs
+%include Implementation.lhs
 
 
 

@@ -1,9 +1,4 @@
-%if standalone
- \input{header}
- %include format.tex
- \begin{document}
-%endif    
-
+%include subfile-begin.tex
 
 
 \section{Problem}
@@ -184,6 +179,7 @@ list of \emph{classes}.
 
 
 \section{Formalization}
+ \label{sec:formal}
  
 
 Let's denote
@@ -279,7 +275,11 @@ Total combinations (worst case):
 \end{equation}
 
 \qquad where $r_i$ is some some sub-route.
- 
+
+\begin{code}
+  
+\end{code}
+             
 \subsubsection{Restrictions}
 
 There are two kinds of restrictions: over \emph{time} and over
@@ -294,7 +294,10 @@ assigned at the same day/time. The capabilities represent:
   \item[Classrooms:] Special requirements (labs etc.); students capacity.
 \end{itemize}
 
-
+\begin{code}
+  
+\end{code}
+ 
 \subsubsection{Preferences}
 
 Preferences create an order over \emph{valid candidates}, that permits
@@ -308,16 +311,14 @@ $$\mathrm{pref}(r) =
  \dfrac{\mathrm{pref'}[G](r) + \mathrm{pref'}[P](r) + \mathrm{pref'}[R](r)}
        {3}$$
                                                                    
-
-%if standalone
- \end{document}
-%endif    
-
+\begin{code}
+  
+\end{code}
+ 
+%include subfile-end.tex
 
 %%% Local Variables:
 %%% latex-build-command: "lhsTeX"
 %%% lhs-build-standalone-flag: t
 %%% eval: (haskell-indentation-mode)
-%%% eval: (when (not (haskell-session-maybe)) (haskell-session-change))
-%%% eval: (load (concat (file-name-as-directory (projectile-project-root)) "publish-pdf.el"))
 %%% End:
