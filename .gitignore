@@ -27,3 +27,6 @@ tex-build/
 #Leksah
 *.lkshs
 *.lkshw
+
+# private
+private.*
