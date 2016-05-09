@@ -1,10 +1,21 @@
 %include polycode.fmt
+%include forall.fmt
+%include greek.fmt
 
 %format family = "\textbf{family}"
 
-%format `union` = "\cup"
+
 %format `compare` = "\lesseqqgtr"
-%format `member` = "\in"
+
+
+%format `union`     = "\cup"
+%format `Set.union` = "\cup"
+%format `Map.union` = "\cup" 
+
+%format `member`     = "\in"
+%format `Set.member` = "\in"
+%format `Map.member` = "\in"
+
 
 %format <|> = "\mathrel{\mathord{<}\mathord{|}\mathord{>}}"
 %format <$> = "\mathrel{\mathord{<}\mathord{\$}\mathord{>}}"

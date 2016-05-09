@@ -2,33 +2,34 @@
 
 
 \section{Problem}
- 
+
 %if False
 \begin{code}
 
 module ACO.UCSP.Definitions where
 
 import Data.Set (Set)
-import qualified Data.Set as Set 
+import qualified Data.Set as Set
 
 import Data.List (permutations)
+import Data.Typeable (Typeable)
 
 \end{code}
 %endif
 
- 
+
 
 \begin{figure}[h]
   \centering
-  \fbox{\input{Graph.tikz}} 
+  \fbox{\input{Graph.tikz}}
   \caption{Problem graph schematic, representing \textbf{G}roups,
     \textbf{D}isciplines, \textbf{T}ime/day, \textbf{P}rofessors,
      Class\textbf{R}ooms.}
   \label{fig:graph}
 \end{figure}
- 
+
 \subsection{Classes}
- 
+
 A \emph{class} is an event, that links together the following
 types of entities, denoted as \emph{roles}:
 \begin{enumerate}
@@ -43,22 +44,21 @@ finite number of unique permutations.
 
 \begin{figure}[h]
   \centering
-  \input{Class.tikz} 
+  \input{Class.tikz}
   \caption{\emph{Class} structure.}
   \label{fig:class}
 \end{figure}
 
 
- 
+
 \begin{code}
 
 -- Used as \textbf{kind} (see \emph{data type promotion})
-data Role = Groups | Time | Professors | Classrooms
+data Role = Groups | DayTime | Professors | Classrooms deriving Typeable
 
 -- 'Role' kind container
-data Role' (r :: Role) = Role'
+data Role' (r :: Role) = Role' deriving Typeable
 
-    
 \end{code}
 
 \subsection{Graph Nodes}
@@ -73,7 +73,7 @@ power of it's domain set.
 \begin{code}
 
 type family RoleValue (r :: Role) :: *
- 
+
 class HasDomain a v | a -> v
   where  domain       :: a -> Set v
          domainPower  :: a -> Int
@@ -140,13 +140,34 @@ Actual timetable structure may vary, as can be seen in figure
   \label{fig:timetables}
 \end{figure}
 
- 
+
+\begin{code}
+
+class (Eq t, Ord t, Enum t, Bounded t) =>
+  DiscreteTime t where  timeQuantum  :: t    -> Int
+
+                        toMinutes    :: t    -> Int
+                        fromMinutes  :: Int  -> Maybe t
+
+class (DiscreteTime t, Enum d, Bounded d) =>
+  Timetable tt t d ev  | tt -> t
+                       , tt -> d
+                       , tt -> ev
+  where  listEvents  :: tt             -> [((d,t), ev)]
+         newTTable   :: [((d,t), ev)]  -> tt
+
+         eventsOn    :: tt  -> d       -> [(t,ev)]
+         eventsAt    :: tt  -> t       -> [(d,ev)]
+         eventAt     :: tt  -> d -> t  -> Maybe ev
+
+\end{code}
+
 \subsection{Graph Edges}
 
 The edges are possible routes, that can be taken by an ``ant''. They connect
 nodes, belonging to \emph{different layers}.
 
-\begin{align*}  
+\begin{align*}
    \forall & a \in \mathrm{Layer}_A \\
    \forall & b \in \mathrm{Layer}_B \\
    &\mbox {if } \mathrm{Layer}_A \text{ and } \mathrm{Layer}_B \text{ are neighbors} \\
@@ -160,27 +181,24 @@ of selecting exactly one node of each role. The selection order doesn't matter.
 
 
 \medskip\noindent
-A complete route (through all the layers) describes 
+A complete route (through all the layers) describes
 a \emph{solution candidate}: some schedule, that holds a
 list of \emph{classes}.
 
 \begin{figure}[h]
   \centering
-  \input{Route.tikz}  
+  \input{Route.tikz}
   \caption{\emph{Route} decomposition.}
   \label{fig:route}
 \end{figure}
 
 
-\begin{code}
-  
-\end{code}
 
 
 
 \section{Formalization}
  \label{sec:formal}
- 
+
 
 Let's denote
 \begin{itemize}[leftmargin=2cm]
@@ -204,7 +222,7 @@ Let's denote
  \item[$N_\Sigma =$] $\sum\limits_{g \in G}~\sum\limits_{d \in D_g} N_d^g$ ---
    total number of classes time periods per week.
 \end{itemize}
- 
+
 
 \subsection{Problem Dimensions}
 
@@ -213,7 +231,7 @@ Let's denote
 Let $G'$ be a list of pairs $\langle\mathrm{group},\mathrm{discipline}\rangle$
 of length $N_\Sigma$, such that
 $\forall \langle g,d \rangle \in G' \implies
- \mathrm{count}_{G'}(\langle g,d \rangl) = N_d^g$.
+ \mathrm{count}_{G'}(\langle g,d \rangle) = N_d^g$.
 There are $N_\Sigma!$ unique permutations.
 
 % Let $G'$ be a list of groups of length $N_\Sigma$,
@@ -229,7 +247,7 @@ There are $N_\Sigma!$ unique permutations.
 % \qquad where $n_i = \sum\limits_{d \in D} N_d^{g_i}$.
 
 \subsubsection{Professors and Classrooms}
- 
+
 With no optimization applied, exists $\dbinom{N_\Sigma + N - 1}{N_\Sigma - 1}$
 (combinations with repetitions), where $N=N_P$ or $N_R$.
 
@@ -276,10 +294,6 @@ Total combinations (worst case):
 
 \qquad where $r_i$ is some some sub-route.
 
-\begin{code}
-  
-\end{code}
-             
 \subsubsection{Restrictions}
 
 There are two kinds of restrictions: over \emph{time} and over
@@ -294,10 +308,8 @@ assigned at the same day/time. The capabilities represent:
   \item[Classrooms:] Special requirements (labs etc.); students capacity.
 \end{itemize}
 
-\begin{code}
-  
-\end{code}
- 
+\emph{Note: group capabilities are incorporated into nodes generation.}
+
 \subsubsection{Preferences}
 
 Preferences create an order over \emph{valid candidates}, that permits
@@ -310,11 +322,8 @@ The preference value for a \emph{complete route}:
 $$\mathrm{pref}(r) =
  \dfrac{\mathrm{pref'}[G](r) + \mathrm{pref'}[P](r) + \mathrm{pref'}[R](r)}
        {3}$$
-                                                                   
-\begin{code}
-  
-\end{code}
- 
+
+
 %include subfile-end.tex
 
 %%% Local Variables:

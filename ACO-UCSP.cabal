@@ -42,4 +42,8 @@ library
                        ConstraintKinds
                        FlexibleContexts
                        TypeOperators
+                       FlexibleInstances
+                       ExistentialQuantification
+                       ScopedTypeVariables
+                       Rank2Types
 --                       UndecidableInstances 
