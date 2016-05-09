@@ -1,6 +1,6 @@
 %include subfile-begin.tex
 
-%format assessClass = "\eta"
+%format assessRoute = "\eta"
 %format pherQ       = "\mathcal{Q}"
 
 \section{Implementation}
@@ -23,10 +23,11 @@ import Data.List (zip4)
 import Data.Ix (Ix)
 import Data.Function (on)
 import Data.Typeable
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, fromMaybe)
 import Data.IORef
 
 import Control.Arrow
+import Control.Applicative
 
 import GHC.Exts
 
@@ -179,30 +180,29 @@ data Class = Class  {  classDiscipline  :: Discipline
                     ,  classRoom        :: Classroom
                     ,  classDay         :: Day
                     ,  classBegins      :: Time
---                    ,  classMinutes     :: Int
                     }
 
 -- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
-buildClasses  ::  Node DayTime
-              ->  Node Groups
-              ->  Node Professors
-              ->  Node Classrooms
-              ->  [Class]
+-- buildclasses  ::  Node DayTime
+--               ->  Node Groups
+--               ->  Node Professors
+--               ->  Node Classrooms
+--               ->  [Class]
 
-buildClasses (Node dts) (Node grs) (Node prs) (Node crs) =
-  let  l   = length dts
-       ls  = [length grs, length prs, length crs]
-  in  if (l /= ) `any` ls
-      then error $ "wrong dimensions: " ++ show (l:ls)
-      else do  ((d,t), (gr,di), pr, cr) <- zip4 dts grs prs crs
-               return Class  {  classDiscipline  = di
-                             ,  classGroup       = gr
-                             ,  classProfessor   = pr
-                             ,  classRoom        = cr
-                             ,  classDay         = d
-                             ,  classBegins      = t
-               }
+-- buildClasses (Node dts) (Node grs) (Node prs) (Node crs) =
+--   let  l   = length dts
+--        ls  = [length grs, length prs, length crs]
+--   in  if (l /= ) `any` ls
+--       then error $ "wrong dimensions: " ++ show (l:ls)
+--       else do  ((d,t), (gr,di), pr, cr) <- zip4 dts grs prs crs
+--                return Class  {  classDiscipline  = di
+--                              ,  classGroup       = gr
+--                              ,  classProfessor   = pr
+--                              ,  classRoom        = cr
+--                              ,  classDay         = d
+--                              ,  classBegins      = t
+--                }
 
 -- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
@@ -213,23 +213,88 @@ type instance RoleValue Classrooms  = Classroom
 
 -- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
 
-class RoleExtra (r :: Role)    where  roleIx     :: Role' r -> Int
-                                      classRole  :: Role' r -> Class -> RoleValue r
+class RoleExtra (r :: Role)    where  roleIx  :: Role' r -> Int
+                                      mbRole  :: Role' r -> PartClass -> Maybe (RoleValue r)
+--                                      classRole  :: Role' r -> Class -> RoleValue r
 
-instance RoleExtra Groups      where  roleIx _     = 0
-                                      classRole _  = classGroup &&& classDiscipline
+instance RoleExtra Groups      where  roleIx _    = 0
+                                      mbRole _ r  = do  d  <- mbDiscipline r
+                                                        g  <- mbGroup r
+                                                        return (g,d)
 
-instance RoleExtra DayTime     where  roleIx _     = 1
-                                      classRole _  = classDay &&& classBegins
+instance RoleExtra DayTime     where  roleIx _  = 1
+                                      mbRole _  = mbDayTime
+--                                      classRole _  = classDay &&& classBegins
 
-instance RoleExtra Professors  where  roleIx _     = 2
-                                      classRole _  = classProfessor
+instance RoleExtra Professors  where  roleIx _  = 2
+                                      mbRole _  = mbProfessor
+--                                      classRole _  = classProfessor
 
-instance RoleExtra Classrooms  where  roleIx _     = 3
-                                      classRole _  = classRoom
+instance RoleExtra Classrooms  where  roleIx _  = 3
+                                      mbRole _  = mbRoom
+--                                      classRole _  = classRoom
 
 \end{code}
 
+
+Meanwhile a \textbf{PartClass} stands for a partially defined \emph{Class} and
+a \emph{Route} --- for a sequence of \emph{PartClasses}.
+
+\begin{code}
+
+data PartClass = PartClass  {  mbDiscipline  :: Maybe Discipline
+                            ,  mbGroup       :: Maybe Group
+                            ,  mbProfessor   :: Maybe Professor
+                            ,  mbRoom        :: Maybe Classroom
+                            ,  mbDayTime     :: Maybe (Day, Time)
+                            }
+
+toFullClass r = do  di     <- mbDiscipline r
+                    g      <- mbGroup r
+                    p      <- mbProfessor r
+                    cr     <- mbRoom r
+                    (d,t)  <- mbDayTime r
+
+                    return $ Class di g p cr d t
+
+-- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
+
+data Route = Route  {  routeParts      :: [PartClass]
+                    ,  hasDisciplines  :: Bool
+                    ,  hasGroups       :: Bool
+                    ,  hasProfessors   :: Bool
+                    ,  hasRooms        :: Bool
+                    ,  hasDayTime      :: Bool
+                    }
+
+class UpdRoute (r :: Role) where updRoute :: Node r -> Route -> Route
+
+updRoute' upd (Node xs) r =
+    do  (pc, x) <- routeParts r `zip` xs
+        [upd pc x]
+
+instance UpdRoute Groups where
+  updRoute n r = r  {  hasDisciplines  = True
+                    ,  hasGroups       = True
+                    ,  routeParts = updRoute' (\pc (g,d) -> pc  {  mbGroup = Just g
+                                                                ,  mbDiscipline = Just d
+                                                                }) n r
+                    }
+
+instance UpdRoute DayTime where
+  updRoute n r = r  {  hasDayTime = True
+                    ,  routeParts = updRoute' (\pc x -> pc { mbDayTime = Just x} ) n r
+                    }
+instance UpdRoute Professors where
+  updRoute n r = r  {  hasProfessors = True
+                    ,  routeParts = updRoute' (\pc x -> pc { mbProfessor = Just x} ) n r
+                    }
+instance UpdRoute Classrooms where
+  updRoute n r = r  {  hasRooms = True
+                    ,  routeParts = updRoute' (\pc x -> pc { mbRoom = Just x} ) n r
+                    }
+
+\end{code}
 
 \subsection{Relations}
 
@@ -240,16 +305,32 @@ Classes must be \emph{time consistent} for each \emph{group},
 
 \begin{code}
 
-timeConsistent :: [Class] -> Bool
-timeConsistent cs  =   timeConsistent' cs classGroup
-                   &&  timeConsistent' cs classProfessor
-                   &&  timeConsistent' cs classRoom
 
-timeConsistent' cs select =  let ofRole = groupWith select cs
-                             in not $ any classesIntersect ofRole
+timeConsistent :: Route -> Bool
+timeConsistent r =
+  let  test :: (Ord a) => (Route -> Bool) -> (PartClass -> a) -> Maybe Bool
+       test b sel = if b r  then timeConsistent' (routeParts r) sel <|> Just False
+                            else Nothing
+       bs =  [  test hasGroups mbGroup
+             ,  test hasProfessors mbProfessor
+             ,  test hasRooms mbRoom
+             ]
+  in hasDayTime r && fromMaybe False (foldr (<|>) Nothing bs)
 
-classesIntersect :: [Class] -> Bool
-classesIntersect = hasRepetitions . map (classDay &&& classBegins)
+timeConsistent' :: (Ord a) => [PartClass] -> (PartClass -> a) -> Maybe Bool
+timeConsistent' rs select = foldr f Nothing byRole
+  where byRole = groupWith select rs
+        f xs acc = (||) <$> acc <*> timeIntersect xs
+
+mbAllJust :: [Maybe a] -> Maybe [a]
+mbAllJust l = inner l []
+  where  inner (Just x : xs)  acc  = inner xs (x:acc)
+         inner []             acc  = Just acc
+         inner _              _    = Nothing
+
+timeIntersect :: [PartClass] -> Maybe Bool
+timeIntersect = fmap hasRepetitions . mbAllJust . map mbDayTime
+
 
 hasRepetitions (x:xs)  = x `elem` xs || hasRepetitions xs
 hasRepetitions []      = False
@@ -262,18 +343,21 @@ Obligations:
 
 data Obligation (r :: Role) = Obligation {
     obligationName    :: String
-  , assessObligation  :: RoleValue r -> Class -> Bool
+  , assessObligation  :: RoleValue r -> PartClass -> Maybe Bool
   }
 
 professorCanTeach :: Obligation Professors
 professorCanTeach  = Obligation "Can teach"
-                   $ \ p c -> classDiscipline c `elem` canTeach p
+                   $ \ p c -> fmap (`elem` canTeach p) (mbDiscipline c)
 
 roomSatisfies :: Obligation Classrooms
 roomSatisfies  = Obligation "Room Capacity and Special Requirements"
-               $ \ r c  ->  roomCapacity r >= groupSize (classGroup c)
-                        &&  all  (`Set.member` roomEquipment r)
-                                 (disciplineReqs $ classDiscipline c)
+               $ \ r c  ->  do  gr <- mbGroup c
+                                di <- mbDiscipline c
+
+                                return $ roomCapacity r >= groupSize gr
+                                       &&  all  (`Set.member` roomEquipment r)
+                                                (disciplineReqs di)
 
 \end{code}
 
@@ -306,33 +390,57 @@ fromUnitInterval (InUnitInterval n) = n
 
 \begin{code}
 
-data ByRole v = forall r . (RoleExtra r) => ByRole  (Role' r)
-                                                    [v r]
+data ByRole v = forall r . (RoleExtra r) => ByRole  (Role' r) [v r]
 
 type SomeObligations = ByRole Obligation
 type SomePreferences = ByRole Preference
 
 -- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
 
-assessClass  ::  SomeObligations  -> SomePreferences
-             ->  Class            -> InUnitInterval
-assessClass obligations preferences class' =
-  let satisfies c (ByRole r os) = all  (  ($ c) . ($ r `classRole` c)
+assessPart  ::  SomeObligations  -> SomePreferences
+            ->  PartClass        -> InUnitInterval
+assessPart obligations preferences pc =
+  inUnitInterval' $  if satisfies obligations
+                     then mean $ assess preferences
+                     else 0
+  where  satisfies (ByRole r os) = case r `mbRole` pc of
+           Just rr ->  all  ( fromMaybe False
+                            . ($ pc) . ($ rr)
+                            .  assessObligation
+                            )  os
+           Nothing -> True
+
+         mean xs = sum xs / fromIntegral (length xs)
+         assess _ = []
+
+
+assessRoute ::  SomeObligations  -> SomePreferences
+            ->  Route            -> InUnitInterval
+
+assessRoute obligations preferences route = undefined
+  where isValid = timeConsistent
+
+\end{code}
+
+
+
+\begin{spec}
+  assessRoute obligations preferences route =
+  let satisfies c (ByRole r os) = all  (  ($ c) . ($ r `routeRole` c)
                                        .  assessObligation
                                        )  os
       mean xs = sum xs / fromIntegral (length xs)
       assess (ByRole r ps) c = map  (  fromUnitInterval
                                     .  ($ (classDay c, classBegins c))
                                     .  ($ classDiscipline c)
-                                    .  ($ r `classRole` c)
+                                    .  ($ r `routeRole` c)
                                     .  assessPreference
                                     )  ps
-  in inUnitInterval' $  if class' `satisfies` obligations
-                        then mean $ preferences `assess` class'
+  in inUnitInterval' $  if route `satisfies` obligations
+                        then mean $ preferences `assess` route
                         else 0
+\end{spec}
 
-
-\end{code}
 
 \subsection{ACO}
 
@@ -387,7 +495,7 @@ instance Ord  AnyRole where compare  = compare  `on` roleIx'
 Route evaluation function:
 \begin{code}
 
-evalSubRoute ::
+-- evalSubRoute ::
 
 \end{code}
 
