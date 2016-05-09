@@ -1,11 +1,13 @@
-%include format.tex
+
 \input{header}
+%include format.fmt
 
+%if showframe
+  \usepackage{showframe}
+%endif
 
-\usepackage{showframe}
+ \begin{document}
 
-
- 
 \provideboolean{showName}
 \setboolean{showName}{false}
 
@@ -33,14 +35,14 @@
 
 
 
-\section{\red{Questions}}
+% \section{\red{Questions}}
 
-\begin{enumerate}
- \item Would it be possible to handle (\ref{eq:totalN}) routes?
- \item Is it OK that a broken restriction results in $0$ in (\ref{eq:eta}),
-       or should there be a grade of ``validness''?
- \item Is the definition OK in general?
-\end{enumerate}
+% \begin{enumerate}
+%  \item Would it be possible to handle (\ref{eq:totalN}) routes?
+%  \item Is it OK that a broken restriction results in $0$ in (\ref{eq:eta}),
+%        or should there be a grade of ``validness''?
+%  \item Is the definition OK in general?
+% \end{enumerate}
  
 \end{document}
 
