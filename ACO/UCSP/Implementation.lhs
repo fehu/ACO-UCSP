@@ -1,7 +1,13 @@
 %include subfile-begin.tex
 
-%format assessRoute = "\eta"
+%format assessRoute  = "\eta"
+%format assessRoute' = "\eta\prime"
 %format pherQ       = "\mathcal{Q}"
+%format evalRoute   = "\xi"
+%format lastPartPheromone = "\tau"
+
+%format alpha setup = "\alpha"
+%format beta  setup = "\beta"
 
 \section{Implementation}
 
@@ -213,26 +219,30 @@ type instance RoleValue Classrooms  = Classroom
 
 -- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
 
-class RoleExtra (r :: Role)    where  roleIx  :: Role' r -> Int
-                                      mbRole  :: Role' r -> PartClass -> Maybe (RoleValue r)
---                                      classRole  :: Role' r -> Class -> RoleValue r
+class RoleExtra (r :: Role) where
+  roleIx  :: Role' r -> Int
+  mbRole  :: Role' r -> PartClass -> Maybe (RoleValue r)
+  classRole  :: Role' r -> Class -> RoleValue r
 
-instance RoleExtra Groups      where  roleIx _    = 0
-                                      mbRole _ r  = do  d  <- mbDiscipline r
-                                                        g  <- mbGroup r
-                                                        return (g,d)
+instance RoleExtra Groups      where  roleIx _     = 0
+                                      mbRole _ r   =  (,) <$>
+                                                      mbGroup r <*>
+                                                      mbDiscipline r
+                                      classRole _  =  classGroup &&&
+                                                      classDiscipline
 
-instance RoleExtra DayTime     where  roleIx _  = 1
-                                      mbRole _  = mbDayTime
---                                      classRole _  = classDay &&& classBegins
+instance RoleExtra DayTime     where  roleIx _     = 1
+                                      mbRole _     = mbDayTime
+                                      classRole _  =  classDay &&&
+                                                      classBegins
 
-instance RoleExtra Professors  where  roleIx _  = 2
-                                      mbRole _  = mbProfessor
---                                      classRole _  = classProfessor
+instance RoleExtra Professors  where  roleIx _     = 2
+                                      mbRole _     = mbProfessor
+                                      classRole _  = classProfessor
 
-instance RoleExtra Classrooms  where  roleIx _  = 3
-                                      mbRole _  = mbRoom
---                                      classRole _  = classRoom
+instance RoleExtra Classrooms  where  roleIx _     = 3
+                                      mbRole _     = mbRoom
+                                      classRole _  = classRoom
 
 \end{code}
 
@@ -274,25 +284,28 @@ updRoute' upd (Node xs) r =
         [upd pc x]
 
 instance UpdRoute Groups where
-  updRoute n r = r  {  hasDisciplines  = True
-                    ,  hasGroups       = True
-                    ,  routeParts = updRoute' (\pc (g,d) -> pc  {  mbGroup = Just g
-                                                                ,  mbDiscipline = Just d
-                                                                }) n r
+  updRoute n r = r  {
+    hasDisciplines  = True,
+    hasGroups       = True,
+    routeParts      = updRoute' (\pc (g,d) -> pc  {  mbGroup = Just g
+                                                  ,  mbDiscipline = Just d
+                                                  }) n r
                     }
-
 instance UpdRoute DayTime where
-  updRoute n r = r  {  hasDayTime = True
-                    ,  routeParts = updRoute' (\pc x -> pc { mbDayTime = Just x} ) n r
-                    }
+  updRoute n r = r  {
+    hasDayTime = True,
+    routeParts = updRoute' (\pc x -> pc { mbDayTime = Just x} ) n r
+    }
 instance UpdRoute Professors where
-  updRoute n r = r  {  hasProfessors = True
-                    ,  routeParts = updRoute' (\pc x -> pc { mbProfessor = Just x} ) n r
-                    }
+  updRoute n r = r  {
+    hasProfessors = True,
+    routeParts = updRoute' (\pc x -> pc { mbProfessor = Just x} ) n r
+    }
 instance UpdRoute Classrooms where
-  updRoute n r = r  {  hasRooms = True
-                    ,  routeParts = updRoute' (\pc x -> pc { mbRoom = Just x} ) n r
-                    }
+  updRoute n r = r  {
+    hasRooms = True,
+    routeParts = updRoute' (\pc x -> pc { mbRoom = Just x} ) n r
+    }
 
 \end{code}
 
@@ -309,7 +322,8 @@ Classes must be \emph{time consistent} for each \emph{group},
 timeConsistent :: Route -> Bool
 timeConsistent r =
   let  test :: (Ord a) => (Route -> Bool) -> (PartClass -> a) -> Maybe Bool
-       test b sel = if b r  then timeConsistent' (routeParts r) sel <|> Just False
+       test b sel = if b r  then     timeConsistent' (routeParts r) sel
+                                <|>  Just False
                             else Nothing
        bs =  [  test hasGroups mbGroup
              ,  test hasProfessors mbProfessor
@@ -317,9 +331,10 @@ timeConsistent r =
              ]
   in hasDayTime r && fromMaybe False (foldr (<|>) Nothing bs)
 
-timeConsistent' :: (Ord a) => [PartClass] -> (PartClass -> a) -> Maybe Bool
-timeConsistent' rs select = foldr f Nothing byRole
-  where byRole = groupWith select rs
+timeConsistent' :: (Ord a)  => [PartClass] -> (PartClass -> a)
+                            -> Maybe Bool
+timeConsistent' pcs select = foldr f Nothing byRole
+  where byRole = groupWith select pcs
         f xs acc = (||) <$> acc <*> timeIntersect xs
 
 mbAllJust :: [Maybe a] -> Maybe [a]
@@ -373,7 +388,7 @@ data Preference (r :: Role) = Preference {
 
 -- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
-newtype InUnitInterval = InUnitInterval Rational
+newtype InUnitInterval = InUnitInterval Float
 
 inUnitInterval n =  if 0 <= n && n <= 1
                     then Just $ InUnitInterval n
@@ -414,8 +429,7 @@ assessPart obligations preferences pc =
          assess _ = []
 
 
-assessRoute ::  SomeObligations  -> SomePreferences
-            ->  Route            -> InUnitInterval
+assessRoute :: SomeObligations -> SomePreferences -> Route -> InUnitInterval
 
 assessRoute obligations preferences route = undefined
   where isValid = timeConsistent
@@ -445,6 +459,7 @@ assessRoute obligations preferences route = undefined
 \subsection{ACO}
 
 \begin{code}
+
 data SetupACO = SetupACO  {  alpha  :: Float
                           ,  beta   :: Float
                           ,  pherQ  :: Float
@@ -452,6 +467,13 @@ data SetupACO = SetupACO  {  alpha  :: Float
                           }
 
 newtype Pheromone = Pheromone Float
+
+data NodesACO = NodesACO ()
+type RelationsACO = (SomeObligations, SomePreferences)
+
+data ACO = AO  {  setupACO      :: SetupACO
+               ,  relationsACO  :: RelationsACO
+               }
 
 \end{code}
 
@@ -470,9 +492,6 @@ type NodeSet r = Set (Node r)
 type NodeKey = (AnyRole, String)
 type PheromoneBetween = Map (AnyRole, AnyRole) Pheromone
 
--- getPheromoneBetween :: Graph -> NodeKey -> NodeKey -> IO (Maybe Pheromone)
--- getPheromoneBetween g n1 n2 = Map.lookup (n1,n2) =<< readIORef $ currentPheromone
-
 data Graph = Graph  {  groupsNodes       :: NodeSet Groups
                     ,  temporalNodes     :: NodeSet DayTime
                     ,  professorsNodes   :: NodeSet Professors
@@ -490,15 +509,32 @@ instance Ord  AnyRole where compare  = compare  `on` roleIx'
 
 \end{code}
 
-\subsubsection{???}
+\subsubsection{Evaluation}
 
-Route evaluation function:
+Route \emph{probabilistic evaluation} function:
+%{
+%format ** = "^"
+%format *  = "\cdot"
+
 \begin{code}
 
--- evalSubRoute ::
+evalRoutes  ::  ACO -> PheromoneBetween -> [Route]
+            ->  [(InUnitInterval, Route)]
+evalRoutes aco ph rs  =    first (fromJust . inUnitInterval . (/ psum))
+                      <$>  zip ps rs
+  where  ps    = map p rs
+         psum  = sum ps
+         p r   = (lastPartPheromone r) ** alpha setup * (assessRoute' r) ** beta setup
+         assessRoute' = fromUnitInterval . uncurry assessRoute (relationsACO aco)
+         lastPartPheromone r = undefined -- TODO
 
 \end{code}
-
+%}
+%if False
+\begin{code}
+         setup = setupACO aco
+\end{code}
+%endif
 
 %include subfile-end.tex
 
