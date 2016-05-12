@@ -78,13 +78,17 @@ class HasDomain a v | a -> v
   where  domain       :: a -> Set v
          domainPower  :: a -> Int
 
-newtype Node (r :: Role) = Node [RoleValue r]
+newtype Node (r :: Role) = Node (String, [RoleValue r])
+
+nodeId (Node (id,_)) = id
 
 mkNodes ::  HasDomain (Role' r) (RoleValue r) =>
-            Role' r ->  [Node r]
+            String ->  Role' r -> [Node r]
 
 
-mkNodes = map Node . permutations . Set.toList . domain
+mkNodes name  =  map Node
+              .  zip (map ((name ++) . show) [1..])
+              .  permutations . Set.toList . domain
 
 \end{code}
 
