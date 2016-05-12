@@ -27,8 +27,11 @@
 \end{titlepage}
 
 
-
 \input{Abstract}
+\bigskip
+\tableofcontents
+\newpage
+
 %include Definitions.lhs
 %include Implementation.lhs
 
