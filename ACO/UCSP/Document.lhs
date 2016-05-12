@@ -6,7 +6,6 @@
   \usepackage{showframe}
 %endif
 
- \begin{document}
 
 \provideboolean{showName}
 \setboolean{showName}{false}
