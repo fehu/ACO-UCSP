@@ -15,6 +15,7 @@ maintainer:          -
 build-type:          Simple
 
 extra-source-files:  README.md
+                     TODO.md
                      ACO/UCSP/README.md
                      ACO/UCSP/TeX/*.tex
                      ACO/UCSP/TeX/tikz/*.tikz.tex

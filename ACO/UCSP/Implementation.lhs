@@ -668,8 +668,8 @@ updatePheromone ExecACO{ exACO=aco, exGraph=graph } rs  =   forM_ rs update
 
 type StopCriteria = ExecACO -> IO Bool
 
-execACO :: ExecACO -> StopCriteria -> IO ([Class], [Route])
-execACO ex@ExecACO{ exACO=aco, exGraph=graph } stop = undefined
+execACO :: ExecACO -> StopCriteria -> IO [Route]
+execACO ex@ExecACO{ exACO=aco, exGraph=graph } stop = result
   where
 
 \end{code}
@@ -712,33 +712,41 @@ execACO ex@ExecACO{ exACO=aco, exGraph=graph } stop = undefined
           let (g', next) = nextRoute ph nset gen r
           in nextRoutes ph (next:acc) nset g' rs
 
-        routes = do  ph  <- currentPheromone graph
-                     g0  <- getStdGen
-                     p0  <- initialPopulation
+        routesIO = do  ph  <- currentPheromone graph
+                       g0  <- getStdGen
+                       p0  <- initialPopulation
 
-                     let  next  :: (RandomGen gen, UpdRoute r) =>
-                                    (Graph -> NodeSet r) -> gen
-                                ->  [Route] -> (gen, [Route])
-                          next     = nextRoutes ph [] . ($ graph)
+                       let  next  :: (RandomGen gen, UpdRoute r) =>
+                                     (Graph -> NodeSet r) -> gen
+                                  ->  [Route] -> (gen, [Route])
+                            next     = nextRoutes ph [] . ($ graph)
 
-                          (g1,p1)  = next temporalNodes g0 p0
-                          (g2,p2)  = next professorsNodes g1 p1
-                          (g3,p3)  = next classroomsNodes g2 p3
+                            (g1,p1)  = next temporalNodes g0 p0
+                            (g2,p2)  = next professorsNodes g1 p1
+                            (g3,p3)  = next classroomsNodes g2 p3
 
-                     setStdGen g3
-                     return p3
+                       setStdGen g3
+                       return p3
 
 \end{code}
 
 \item Update pheromone and counter:
 \begin{code}
 
+        updateStates rs = do  updatePheromone ex rs
+                              exRuns ex `modifyIORef` (+1)
+
 \end{code}
 
 \item \textbf{Return} best routes \textbf{if} \emph{stop criteria} applies,
 \textbf{go to \ref{it:first-exec}} otherwise.
 \begin{code}
-
+        result = do  routes <- routesIO
+                     updateStates routes
+                     
+                     stop' <- stop ex
+                     if stop'  then  return routes
+                               else  execACO ex stop
 \end{code}
 
 \end{enumerate}
