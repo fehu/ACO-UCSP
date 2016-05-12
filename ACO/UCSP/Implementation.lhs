@@ -285,6 +285,8 @@ hasProfessors   = isJust . mbProfessorsNode
 hasRooms        = isJust . mbRoomsNode
 hasDayTime      = isJust . mbDayTimeNode
 
+emptyRoute = Route [] Nothing Nothing Nothing Nothing []
+
 class UpdRoute (r :: Role) where updRoute :: Node r -> Route -> Route
 
 updRoute' upd (Node (_, xs)) r =
@@ -459,24 +461,6 @@ assessRoute obligations preferences route = fromJust . inUnitInterval $
 
 
 
-\begin{spec}
-  assessRoute obligations preferences route =
-  let satisfies c (ByRole r os) = all  (  ($ c) . ($ r `routeRole` c)
-                                       .  assessObligation
-                                       )  os
-      mean xs = sum xs / fromIntegral (length xs)
-      assess (ByRole r ps) c = map  (  fromUnitInterval
-                                    .  ($ (classDay c, classBegins c))
-                                    .  ($ classDiscipline c)
-                                    .  ($ r `routeRole` c)
-                                    .  assessPreference
-                                    )  ps
-  in inUnitInterval' $  if route `satisfies` obligations
-                        then mean $ preferences `assess` route
-                        else 0
-\end{spec}
-
-
 \subsection{ACO}
 
 \begin{code}
@@ -601,12 +585,10 @@ Route \emph{probabilistic evaluation} function:
 %format lastPartPheromone r = "\tau"
 \begin{code}
 
-evalRoutes  ::  ExecACO -> PheromoneBetween -> [Route]
-            ->  IO [(InUnitInterval, Route)]
-evalRoutes ExecACO{ exACO=aco, exGraph=graph } ph rs  = do
-  ph <- currentPheromone graph
-
-  return  $    first (fromJust . inUnitInterval . (/ psum))
+evalRoutes  ::  ACO -> PheromoneBetween -> [Route]
+            ->  [(InUnitInterval, Route)]
+evalRoutes aco ph rs  =
+  first (fromJust . inUnitInterval . (/ psum))
           <$>  zip ps rs'
 
   where  (rs', ps) = unzip $ map p rs
@@ -698,28 +680,55 @@ execACO ex@ExecACO{ exACO=aco, exGraph=graph } stop = undefined
 \label{it:first-exec}
 \begin{code}
         initialPopulation = case populationACO aco of
-            (GenPopulation size unique genRef) -> do
+            GenPopulation size unique genRef -> do
                 gen <- readIORef genRef
                 let  rand' = if unique  then  randChoosesUnique
                                         else  randChoices
                      gdNodes   = Set.toList $ groupsNodes graph
                      (g,rand)  = rand' gen size gdNodes
                 writeIORef genRef g
-                return rand
+                return $ map (`updRoute` emptyRoute) rand
 \end{code}
 
-\item $\forall ~\mathrm{layer}~\mathbf{do:}$
+\item $\forall ~\mathrm{layer}, \mathrm{route} ~\mathbf{do:}$
   \begin{enumerate}
-  \item Evaluate nodes selection probabilities:
-\begin{code}
-
-\end{code}
-
-  \item $\forall \mathrm{ant},$ select next node:
-\begin{code}
-
-\end{code}
+    \item Generate all the possible \emph{route} continuations by
+      updating the \emph{route} with \emph{layer}'s nodes.
+    \item Assess continuations with $\xi$ and select the node according to the
+      assessed probabilities.
   \end{enumerate}
+
+\begin{code}
+        nextRoute  ::  (UpdRoute r, RandomGen gen) =>
+                       PheromoneBetween -> NodeSet r -> gen
+                   ->  Route -> (gen, Route)
+        nextRoute ph nset gen r =
+          let  candidates = (`updRoute` r) <$> Set.toList nset
+               evCandidates = evalRoutes aco ph
+          in randCoiceWithProb gen fst evCandidates
+
+        nextRoutes _ acc _ g [] = (g,acc)
+        nextRoutes ph acc nset gen (r:rs) =
+          let (g', next) = nextRoute ph nset gen r
+          in nextRoutes ph (next:acc) nset g' rs
+
+        routes = do  ph  <- currentPheromone graph
+                     g0  <- getStdGen
+                     p0  <- initialPopulation
+
+                     let  next  :: (RandomGen gen, UpdRoute r) =>
+                                    (Graph -> NodeSet r) -> gen
+                                ->  [Route] -> (gen, [Route])
+                          next     = nextRoutes ph [] . ($ graph)
+
+                          (g1,p1)  = next temporalNodes g0 p0
+                          (g2,p2)  = next professorsNodes g1 p1
+                          (g3,p3)  = next classroomsNodes g2 p3
+
+                     setStdGen g3
+                     return p3
+
+\end{code}
 
 \item Update pheromone and counter:
 \begin{code}
@@ -764,6 +773,9 @@ randChoosesUnique gen count xs  =
   if length xs < count
       then randChoosesUnique gen (length xs) xs
       else second (map (xs !!)) $ randUniqueIndices gen count (length xs)
+
+
+randCoiceWithProb gen probOf xs = undefined -- TODO
 
 \end{code}
 
