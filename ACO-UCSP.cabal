@@ -30,7 +30,7 @@ library
                        ACO.UCSP.Implementation
 
   other-modules:       ACO.UCSP.Test.TestData1
-                       ACO.UCSP.Test.TestExec
+                       ACO.UCSP.Test.TestExec1
 
   build-depends:       base >=4.8 && <4.9
                      , containers >= 0.5
@@ -50,4 +50,29 @@ library
                        ExistentialQuantification
                        ScopedTypeVariables
                        Rank2Types
---                       UndecidableInstances
+
+
+
+executable aco-ucsp-test1
+  hs-source-dirs:      .
+  main-is:             ACO/UCSP/Test/Run/Run1.hs
+  build-depends:       ACO-UCSP
+                     , base >= 4.8 && < 4.9
+                     , containers >= 0.5
+                     , random == 1.1
+
+  default-language:    Haskell2010
+  default-extensions:  KindSignatures
+                       DataKinds
+                       TypeFamilies
+                       MultiParamTypeClasses
+                       FunctionalDependencies
+                       ConstraintKinds
+                       FlexibleContexts
+                       TypeOperators
+                       FlexibleInstances
+                       ExistentialQuantification
+                       ScopedTypeVariables
+                       Rank2Types
+
+

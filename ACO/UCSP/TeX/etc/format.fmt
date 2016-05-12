@@ -22,3 +22,10 @@
 %format <$> = "\mathrel{\mathord{<}\mathord{\$}\mathord{>}}"
 %format <*> = "\mathrel{\mathord{<}\mathord{*}\mathord{>}}"
 %format &&& = "\mathrel{\mathord{\&}\mathord{\&}\mathord{\&}}"
+
+
+%%%%%%%%%%%% PROJECT LOCAL %%%%%%%%%%%%
+
+%format pherQ  = "\mathcal{Q}"
+%format pherQ0 = "\mathcal{Q}_0"
+

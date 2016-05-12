@@ -35,18 +35,16 @@
 %include Definitions.lhs
 %include Implementation.lhs
 
-\section{Tests}
+\section{Tests \textnumero1}
 
 Here are presented some \emph{ACO} test runs with the following data.
 
-
 \newcommand{\localSectionCmd}[1]{\subsubsection{#1}}
 
-\subsection{Data \textnumero1}
+\subsection{Data}
 %include TestData1.lhs
-
 \subsection{Tests Execution}
-%include TestExec.lhs
+%include TestExec1.lhs
 
 
 

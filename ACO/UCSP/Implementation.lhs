@@ -2,8 +2,6 @@
 
 
 %format assessRoute = "\eta"
-%format pherQ       = "\mathcal{Q}"
-%format pherQ0      = "\mathcal{Q}_0"
 %format evalRoutes  = "\xi"
 %format pheromoneByAnt = "\Delta\tau_r"
 %format updatePheromone = "\widetilde{\Delta\tau}"
@@ -340,8 +338,8 @@ timeConsistent r =
 
 timeConsistent' :: (Ord a)  => [PartClass] -> (PartClass -> a)
                             -> Maybe Bool
-timeConsistent' pcs select = foldr f Nothing byRole
-  where byRole = groupWith select pcs
+timeConsistent' pcs select = foldr f Nothing forRole
+  where forRole = groupWith select pcs
         f xs acc = (||) <$> acc <*> timeIntersect xs
 
 mbAllJust :: [Maybe a] -> Maybe [a]
@@ -412,10 +410,12 @@ fromUnitInterval (InUnitInterval n) = n
 
 \begin{code}
 
-data ByRole v = forall r . (RoleExtra r) => ByRole  (Role' r) [v r]
+data ForRole v = forall r . (RoleExtra r) => ForRole  (Role' r) [v r]
 
-type SomeObligations = [ByRole Obligation]
-type SomePreferences = [ByRole Preference]
+forRole vs = ForRole Role' vs
+
+type SomeObligations = [ForRole Obligation]
+type SomePreferences = [ForRole Preference]
 
 -- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
 
@@ -431,13 +431,13 @@ assessPart obligations preferences pc =
   inUnitInterval' $  if all satisfies obligations
                      then mean $ concatMap assess preferences
                      else 0
-  where  satisfies (ByRole r os) = case r `mbRole` pc of
+  where  satisfies (ForRole r os) = case r `mbRole` pc of
            Just rr ->  all  ( fromMaybe False
                             . ($ pc) . ($ rr)
                             .  assessObligation
                             )  os
            Nothing -> True
-         assess (ByRole r ps) = fromMaybe [] $
+         assess (ForRole r ps) = fromMaybe [] $
            do  dt  <- mbDayTime pc
                di  <- mbDiscipline pc
                rv  <- mbRole r pc
@@ -687,6 +687,7 @@ execACO ex@ExecACO{ exACO=aco, exGraph=graph } stop = result
                      gdNodes   = Set.toList $ groupsNodes graph
                      (g,rand)  = rand' gen size gdNodes
                 writeIORef genRef g
+                putStrLn "Generated Initial Population" -- DEBUG
                 return $ map (`updRoute` emptyRoute) rand
 \end{code}
 
@@ -726,6 +727,7 @@ execACO ex@ExecACO{ exACO=aco, exGraph=graph } stop = result
                             (g3,p3)  = next classroomsNodes g2 p3
 
                        setStdGen g3
+                       putStrLn "routesIO" -- DEBUG
                        return p3
 
 \end{code}
@@ -865,7 +867,7 @@ instance (HasDomain GroupsData Group) =>
 instance HasDomain (Role' DayTime) (Day, Time)
   where  domainPower _ = 6 * (timeDMax + 1)
          domain _ = Set.fromList $ do  d  <- [minBound..]
-                                       t  <- [minBound..] 
+                                       t  <- [minBound.. maxBound] 
                                        return (d,t)
 
 \end{code}
