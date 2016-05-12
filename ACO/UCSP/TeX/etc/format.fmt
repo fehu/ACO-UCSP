@@ -16,6 +16,7 @@
 %format `Set.member` = "\in"
 %format `Map.member` = "\in"
 
+%format Set.empty = "\emptyset"
 
 %format <|> = "\mathrel{\mathord{<}\mathord{|}\mathord{>}}"
 %format <$> = "\mathrel{\mathord{<}\mathord{\$}\mathord{>}}"

@@ -28,8 +28,10 @@ cabal-version:       >=1.10
 library
   exposed-modules:     ACO.UCSP.Definitions
                        ACO.UCSP.Implementation
-  -- other-modules:
-  -- other-extensions:
+
+  other-modules:       ACO.UCSP.Test.TestData1
+                       ACO.UCSP.Test.TestExec
+
   build-depends:       base >=4.8 && <4.9
                      , containers >= 0.5
                      , random == 1.1

@@ -11,7 +11,7 @@ TODO
 
 ### Tests
 
-- [ ] add test data
+- [x] add test data
 - [ ] run ACO on test data
 
 ### Document
