@@ -1,7 +1,7 @@
 %include subfile-begin.tex
 
-% format pherQ (setupACO aco) = pherQ
-% format rho (setupACO aco) = "QQ"
+% format pherQ (paramsACO aco) = pherQ
+% format rho (paramsACO aco) = "QQ"
 
 %format assessRoute = "\eta"
 %format pherQ       = "\mathcal{Q}"
@@ -10,7 +10,7 @@
 %format pheromoneByAnt = "\Delta\tau_r"
 %format updatePheromone = "\widetilde{\Delta\tau}"
 
-%format (setupACO aco) = "setup"
+%format (paramsACO aco) = "setup"
 
 %format alpha  setup = "\alpha"
 %format beta   setup = "\beta"
@@ -41,10 +41,13 @@ import Data.Function (on)
 import Data.Typeable
 import Data.Maybe
 import Data.IORef
+import Data.Tuple (swap)
 
 import Control.Arrow
 import Control.Applicative
 import Control.Monad
+
+import System.Random
 
 import GHC.Exts
 
@@ -478,18 +481,26 @@ assessRoute obligations preferences route = fromJust . inUnitInterval $
 
 \begin{code}
 
-data SetupACO = SetupACO  {  alpha   :: Float
-                          ,  beta    :: Float
-                          ,  pherQ   :: Float
-                          ,  pherQ0  :: Float
-                          ,  rho     :: Float
-                          }
+data ParamsACO = ParamsACO  {  alpha   :: Float
+                            ,  beta    :: Float
+                            ,  pherQ   :: Float
+                            ,  pherQ0  :: Float
+                            ,  rho     :: Float
+                            }
 
 type RelationsACO = (SomeObligations, SomePreferences)
 
-data ACO = AO  {  setupACO      :: SetupACO
-               ,  relationsACO  :: RelationsACO
-               }
+
+data  PopulationACO = forall gen . RandomGen gen =>
+      GenPopulation Int GenUnique (IORef gen)
+
+type GenUnique = Bool
+
+
+data ACO = ACO  {  paramsACO      :: ParamsACO
+                ,  relationsACO   :: RelationsACO
+                ,  populationACO  :: PopulationACO
+                }
 
 
 -- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
@@ -549,6 +560,7 @@ updPheromone g k upd =
 
 data ExecACO = ExecACO  {  exACO    :: ACO
                         ,  exGraph  :: Graph
+                        ,  exRuns   :: IORef Int
                         }
 
 -- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
@@ -591,7 +603,7 @@ Route \emph{probabilistic evaluation} function:
 
 evalRoutes  ::  ExecACO -> PheromoneBetween -> [Route]
             ->  IO [(InUnitInterval, Route)]
-evalRoutes (ExecACO aco graph) ph rs  = do
+evalRoutes ExecACO{ exACO=aco, exGraph=graph } ph rs  = do
   ph <- currentPheromone graph
 
   return  $    first (fromJust . inUnitInterval . (/ psum))
@@ -618,7 +630,7 @@ evalRoutes (ExecACO aco graph) ph rs  = do
 
 %if False
 \begin{code}
-         setup = setupACO aco
+         setup = paramsACO aco
 \end{code}
 %endif
 
@@ -631,7 +643,7 @@ pheromoneByAnt :: ACO -> Route -> [((AnyNode, AnyNode), Pheromone)]
 pheromoneByAnt aco r =
     let  edgs  =  lPairs $ routeNodes r
          hist  =  assessHistory r
-         w     =  pherQ (setupACO aco) / sum (map fromUnitInterval hist)
+         w     =  pherQ (paramsACO aco) / sum (map fromUnitInterval hist)
          weight = Pheromone . (* w) . fromUnitInterval
     in  if length edgs /= length hist
         then error "[BUG] wrong assess history length"
@@ -655,16 +667,105 @@ Pheromone update (secretion and vaporization):
 \begin{code}
 
 updatePheromone :: ExecACO -> [Route] -> IO ()
-updatePheromone (ExecACO aco graph) rs = forM_ rs update >> vaporize
+updatePheromone ExecACO{ exACO=aco, exGraph=graph } rs  =   forM_ rs update
+                                                        >>  vaporize
   where  update r = sequence_ $ do  (i,ph) <- pheromoneByAnt aco r
-                                    [updPheromone graph i (+ ph * Pheromone (rho (setupACO aco)))]
+                                    [updPheromone graph i (+ ph * Pheromone (rho (paramsACO aco)))]
 
          vaporize = sequence_ $ do  ref <-  Map.elems $
                                             pheromoneCache graph
-                                    [modifyIORef' ref (* Pheromone (1 - rho (setupACO aco)))] -- strict
+                                    [modifyIORef' ref (* Pheromone (1 - rho (paramsACO aco)))] -- strict
 
 \end{code}
 %}
+
+
+\subsubsection{Execution}
+
+\begin{code}
+
+type StopCriteria = ExecACO -> IO Bool
+
+execACO :: ExecACO -> StopCriteria -> IO ([Class], [Route])
+execACO ex@ExecACO{ exACO=aco, exGraph=graph } stop = undefined
+  where
+
+\end{code}
+
+\begin{enumerate}
+\item Generate initial population by selectting randomly some
+ nodes at \emph{Group--Discipline} layer:
+\label{it:first-exec}
+\begin{code}
+        initialPopulation = case populationACO aco of
+            (GenPopulation size unique genRef) -> do
+                gen <- readIORef genRef
+                let  rand' = if unique  then  randChoosesUnique
+                                        else  randChoices
+                     gdNodes   = Set.toList $ groupsNodes graph
+                     (g,rand)  = rand' gen size gdNodes
+                writeIORef genRef g
+                return rand
+\end{code}
+
+\item $\forall ~\mathrm{layer}~\mathbf{do:}$
+  \begin{enumerate}
+  \item Evaluate nodes selection probabilities:
+\begin{code}
+
+\end{code}
+
+  \item $\forall \mathrm{ant},$ select next node:
+\begin{code}
+
+\end{code}
+  \end{enumerate}
+
+\item Update pheromone and counter:
+\begin{code}
+
+\end{code}
+
+\item \textbf{Return} best routes \textbf{if} \emph{stop criteria} applies,
+\textbf{go to \ref{it:first-exec}} otherwise.
+\begin{code}
+
+\end{code}
+
+\end{enumerate}
+
+\crule{0.5}
+
+\begin{code}
+
+randChoice gen xs =
+  if null xs  then error "randChoice: empty list"
+              else first (xs !!) $ randomR (0,length xs -1) gen
+
+randChoices gen count xs =
+  if length xs < count
+  then randChoices gen (length xs) xs
+  else  swap $ foldr rand ([],gen) [1..count]
+
+        where rand _ (acc,g) = first (:acc) $ randChoice g xs
+
+randUniqueIndices gen count length =
+  let  ixSet  = Set.fromList [1..length]
+  in if count > length  then  error "randUniqueIndices: count > length"
+                        else  inner gen ixSet count []
+  where  inner g _ 0 acc  = (g, acc)
+         inner g s c acc  =  let  (i, g')  = randomR (0, Set.size s - 1) g
+                                  v        = Set.elemAt i s
+                                  s'       = Set.delete v s
+                             in inner g' s' (c-1) (v:acc)
+
+
+randChoosesUnique gen count xs  =
+  if length xs < count
+      then randChoosesUnique gen (length xs) xs
+      else second (map (xs !!)) $ randUniqueIndices gen count (length xs)
+
+\end{code}
 
 %include subfile-end.tex
 
@@ -672,5 +773,6 @@ updatePheromone (ExecACO aco graph) rs = forM_ rs update >> vaporize
 %%% latex-build-command: "lhsTeX"
 %%% lhs-build-standalone-flag: t
 %%% lhs-showframe-flag: t
+%%% eval: (interactive-haskell-mode)
 %%% eval: (haskell-indentation-mode)
 %%% End:
