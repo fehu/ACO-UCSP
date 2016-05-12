@@ -58,10 +58,10 @@ Here follows definition of the input data, as stated in Section~\ref{sec:formal}
 
 \begin{code}
 
-data Discipline = Dicipline  { disciplineId    :: String
-                             , disciplineTime  :: Int
-                             , disciplineReqs  :: Set Requirement
-                             }
+data Discipline = Discipline  { disciplineId    :: String
+                              , disciplineTime  :: Int
+                              , disciplineReqs  :: Set Requirement
+                              }
 
 newtype Requirement = Requirement String
   deriving (Show, Eq, Ord)
@@ -128,7 +128,7 @@ newtype Time = Time Int
 
 timeQ    = 30
 timeMin  = 60 * 8
-timeMax  = 60 * 22
+timeMax  = 60 * 21 + 30
 
 timeDMin = 0
 timeDMax = (timeMax - timeMin) `quot` timeQ
@@ -805,7 +805,7 @@ randCoiceWithProb gen probOf xs =
 Here follows creation of an '\emph{ExecACO}' instance.
 
 \begin{code}
-newExecACO ::  (  RoleDomain Groups
+newExecACO ::  (  HasDomain GroupsData Group
                ,  RoleDomain DayTime
                ,  RoleDomain Professors
                ,  RoleDomain Classrooms
@@ -825,21 +825,51 @@ newExecACO aco = do
 
        pairs xs ys = do  x  <- xs
                          y  <- ys
-                         return $ (anyNode x, anyNode y)
+                         return (anyNode x, anyNode y)
 
   cache <- sequence $ do  k <- ks
                           [ (,) k <$> newIORef (Pheromone (pherQ0 (paramsACO aco))) ]
-  
+
   let graph = Graph  (Set.fromList gs)
                      (Set.fromList ts)
                      (Set.fromList ps)
                      (Set.fromList rs)
                      (Map.fromList cache)
   countRef <- newIORef 0
-  
+
   return $ ExecACO aco graph countRef
 \end{code}
- 
+
+\medskip\noindent
+\emph{Groups} nodes are created respecting groups' disciplines.
+
+\begin{code}
+
+data GroupsData = GroupsData
+
+instance (HasDomain GroupsData Group) =>
+  HasDomain (Role' Groups) (Group, Discipline)
+
+  where  domain _  =    Set.unions
+                   $    (\g -> Set.map ((,) g) $ groupDisciplines g)
+                   <$>  Set.toList (domain GroupsData)
+         domainPower = Set.size . domain
+
+\end{code}
+
+\medskip\noindent
+\emph{Day--Time} domain is determined by the \emph{timetable}.
+
+\begin{code}
+
+instance HasDomain (Role' DayTime) (Day, Time)
+  where  domainPower _ = 6 * (timeDMax + 1)
+         domain _ = Set.fromList $ do  d  <- [minBound..]
+                                       t  <- [minBound..] 
+                                       return (d,t)
+
+\end{code}
+
 %include subfile-end.tex
 
 %%% Local Variables:
