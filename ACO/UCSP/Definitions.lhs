@@ -13,6 +13,7 @@ import qualified Data.Set as Set
 
 import Data.List (permutations)
 import Data.Typeable (Typeable)
+import Data.Function (on)
 
 \end{code}
 %endif
@@ -74,18 +75,22 @@ power of it's domain set.
 
 type family RoleValue (r :: Role) :: *
 
-class HasDomain a v | a -> v
-  where  domain       :: a -> Set v
-         domainPower  :: a -> Int
-
 newtype Node (r :: Role) = Node (String, [RoleValue r])
 
 nodeId (Node (id,_)) = id
 
-mkNodes ::  HasDomain (Role' r) (RoleValue r) =>
-            String ->  Role' r -> [Node r]
+instance Eq   (Node r)  where (==)     = (==)     `on` nodeId
+instance Ord  (Node r)  where compare  = compare  `on` nodeId
+  
+-- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
+class HasDomain a v | a -> v
+  where  domain       :: a -> Set v
+         domainPower  :: a -> Int
 
+type RoleDomain r = HasDomain (Role' r ) (RoleValue r)
+
+mkNodes :: RoleDomain r => String ->  Role' r -> [Node r]
 mkNodes name  =  map Node
               .  zip (map ((name ++) . show) [1..])
               .  permutations . Set.toList . domain
@@ -334,4 +339,5 @@ $$\mathrm{pref}(r) =
 %%% latex-build-command: "lhsTeX"
 %%% lhs-build-standalone-flag: t
 %%% eval: (haskell-indentation-mode)
+%%% eval: (interactive-haskell-mode)
 %%% End:

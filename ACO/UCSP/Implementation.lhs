@@ -1,7 +1,5 @@
 %include subfile-begin.tex
 
-% format pherQ (paramsACO aco) = pherQ
-% format rho (paramsACO aco) = "QQ"
 
 %format assessRoute = "\eta"
 %format pherQ       = "\mathcal{Q}"
@@ -530,6 +528,7 @@ data Graph = Graph  {  groupsNodes      :: NodeSet Groups
 currentPheromone :: Graph -> IO PheromoneBetween
 currentPheromone = mapM readIORef . pheromoneCache
 
+phKey (x,y) = (x `min` y, x `max` y)
 
 -- Lazy update
 updPheromone  ::  Graph
@@ -537,7 +536,7 @@ updPheromone  ::  Graph
               ->  (Pheromone -> Pheromone)
               ->  IO ()
 updPheromone g k upd =
-    case k `Map.lookup` pheromoneCache g of
+    case phKey k `Map.lookup` pheromoneCache g of
         Just ref  -> modifyIORef ref upd
         _         -> error $ "no pheromone cache for " ++ show k
 
@@ -554,6 +553,8 @@ data  AnyNode = forall r . (Typeable r, RoleExtra r) =>
 nodeRoleIx  (AnyNode r _)  = roleIx r
 nodeId'     (AnyNode _ n)  = nodeId n
 nodeId'' = nodeRoleIx &&& nodeId'
+
+anyNode n = AnyNode Role' n
 
 instance Eq   AnyNode where (==)     = (==)     `on` nodeId''
 instance Ord  AnyNode where compare  = compare  `on` nodeId''
@@ -601,10 +602,9 @@ evalRoutes aco ph rs  =
                               ,  fromUnitInterval v
                               )
 
-         find = (`Map.lookup` ph)
          lastPartPheromone r = case routeNodes r of
                 x:y:_  ->  maybe (pherQ0 setup) pheromoneQuantity
-                           $ find (x,y) <|> find (y,x)
+                           $ phKey (x,y) `Map.lookup` ph
                 _      -> pherQ0 setup
 
 \end{code}
@@ -799,6 +799,47 @@ randCoiceWithProb gen probOf xs =
 
 \end{code}
 
+
+\subsubsection{Creation}
+
+Here follows creation of an '\emph{ExecACO}' instance.
+
+\begin{code}
+newExecACO ::  (  RoleDomain Groups
+               ,  RoleDomain DayTime
+               ,  RoleDomain Professors
+               ,  RoleDomain Classrooms
+               ) =>
+               ACO -> IO ExecACO
+newExecACO aco = do
+
+  let  gs  = mkNodes "G" (Role' :: Role' Groups)
+       ts  = mkNodes "T" (Role' :: Role' DayTime)
+       ps  = mkNodes "P" (Role' :: Role' Professors)
+       rs  = mkNodes "R" (Role' :: Role' Classrooms)
+
+       ks  = concat  [  pairs gs ts
+                     ,  pairs ts ps
+                     ,  pairs ps rs
+                     ]
+
+       pairs xs ys = do  x  <- xs
+                         y  <- ys
+                         return $ (anyNode x, anyNode y)
+
+  cache <- sequence $ do  k <- ks
+                          [ (,) k <$> newIORef (Pheromone (pherQ0 (paramsACO aco))) ]
+  
+  let graph = Graph  (Set.fromList gs)
+                     (Set.fromList ts)
+                     (Set.fromList ps)
+                     (Set.fromList rs)
+                     (Map.fromList cache)
+  countRef <- newIORef 0
+  
+  return $ ExecACO aco graph countRef
+\end{code}
+ 
 %include subfile-end.tex
 
 %%% Local Variables:

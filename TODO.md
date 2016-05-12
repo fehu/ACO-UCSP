@@ -4,7 +4,9 @@ TODO
 ### Implementation
 
 - [x] implement 'randCoiceWithProb'y
-- [ ] implement 'Graph' generation
+- [x] implement 'Graph' generation
+- [ ] select best routes
+
 - [ ] test functionality
 
 ### Tests
