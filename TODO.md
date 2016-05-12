@@ -3,7 +3,7 @@ TODO
 
 ### Implementation
 
-- [ ] implement 'randCoiceWithProb'
+- [x] implement 'randCoiceWithProb'y
 - [ ] implement 'Graph' generation
 - [ ] test functionality
 

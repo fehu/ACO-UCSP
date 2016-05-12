@@ -704,8 +704,8 @@ execACO ex@ExecACO{ exACO=aco, exGraph=graph } stop = result
                    ->  Route -> (gen, Route)
         nextRoute ph nset gen r =
           let  candidates = (`updRoute` r) <$> Set.toList nset
-               evCandidates = evalRoutes aco ph
-          in randCoiceWithProb gen fst evCandidates
+               evCandidates = evalRoutes aco ph candidates
+          in second snd $ randCoiceWithProb gen fst evCandidates
 
         nextRoutes _ acc _ g [] = (g,acc)
         nextRoutes ph acc nset gen (r:rs) =
@@ -743,7 +743,7 @@ execACO ex@ExecACO{ exACO=aco, exGraph=graph } stop = result
 \begin{code}
         result = do  routes <- routesIO
                      updateStates routes
-                     
+
                      stop' <- stop ex
                      if stop'  then  return routes
                                else  execACO ex stop
@@ -782,8 +782,20 @@ randChoosesUnique gen count xs  =
       then randChoosesUnique gen (length xs) xs
       else second (map (xs !!)) $ randUniqueIndices gen count (length xs)
 
+randCoiceWithProb  ::  (RandomGen gen) =>
+                       gen -> (a -> InUnitInterval) -> [a] -> (gen, a)
+randCoiceWithProb gen probOf xs =
+  let  (r,g') = random gen
 
-randCoiceWithProb gen probOf xs = undefined -- TODO
+       accumulating acc _ [] = acc
+       accumulating acc f (x:xs) = case f acc x of
+                                     Just acc'  -> accumulating acc' f xs
+                                     _          -> acc
+       f (p,_) x =  let p' = p + fromUnitInterval (probOf x)
+                    in if p' > r  then Nothing
+                                  else Just (p',x)
+  in (g', snd $ accumulating (0,head xs) f (tail xs))
+
 
 \end{code}
 
