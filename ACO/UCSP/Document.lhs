@@ -15,7 +15,7 @@
            { \def\myId{\rule{6em}{1pt}}
              \def\myName{Dmitry K.}
            }
-\input{title}
+\input{Title}
  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  
@@ -35,15 +35,26 @@
 %include Definitions.lhs
 %include Implementation.lhs
 
+\section{Tests}
+
+Here are presented some \emph{ACO} test runs with the following data.
+
+
+\newcommand{\localSectionCmd}[1]{\subsubsection{#1}}
+
+\subsection{Data \textnumero1}
+%include TestData1.lhs
+
+\subsection{Tests Execution}
+%include TestExec.lhs
+
+
+
 
 
 % \section{\red{Questions}}
-
 % \begin{enumerate}
-%  \item Would it be possible to handle (\ref{eq:totalN}) routes?
-%  \item Is it OK that a broken restriction results in $0$ in (\ref{eq:eta}),
-%        or should there be a grade of ``validness''?
-%  \item Is the definition OK in general?
+%  \item 
 % \end{enumerate}
  
 \end{document}
