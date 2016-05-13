@@ -22,16 +22,22 @@ extra-source-files:  README.md
                      ACO/UCSP/TeX/etc/*.tex
                      ACO/UCSP/TeX/etc/*.fmt
                      ACO/UCSP/Document.lhs
+                     ACO/UCSP/Test/*.lhs
+                     ACO/UCSP/Test/*.hs
+                     ACO/UCSP/Test/ghc-flags
+                     ACO/UCSP/Test/TestEval1
 
 cabal-version:       >=1.10
 
 library
   exposed-modules:     ACO.UCSP.Definitions
                        ACO.UCSP.Implementation
-
-  other-modules:       ACO.UCSP.Test.TestData1
+                       ACO.UCSP.Test.TestData1
                        ACO.UCSP.Test.TestExec1
+                       ACO.UCSP.Test.Eval2TeX
 
+  -- other-modules:     
+   
   build-depends:       base >=4.8 && <4.9
                      , containers >= 0.5
                      , random == 1.1

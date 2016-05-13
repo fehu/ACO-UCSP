@@ -1,0 +1,1 @@
+-XKindSignatures -XDataKinds -XTypeFamilies -XMultiParamTypeClasses -XFunctionalDependencies -XConstraintKinds -XFlexibleContexts -XTypeOperators -XFlexibleInstances -XExistentialQuantification -XScopedTypeVariables -XRank2Types

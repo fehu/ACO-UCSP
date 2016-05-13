@@ -1,6 +1,16 @@
 %include subfile-begin.tex
 
+%format nClasses = "N_\Sigma"
+%format nTime    = "N_T"
+%format nProfessors = "N_P"
+%format nRooms = "N_R"
+
+%format fact x = x "!"
+%format binom (n) (k) = "\dbinom{" n "}{" k "}"
+
 \providecommand{\localSectionCmd}[1]{\section{#1}}
+
+\input{TestEval1.tex}
  
 %if False
 \begin{code}
@@ -12,6 +22,8 @@ import ACO.UCSP.Implementation
 import ACO.UCSP.Test.TestData1
 
 import Data.IORef
+
+import qualified Data.Set as Set
 
 import System.Random
 
@@ -83,15 +95,80 @@ run = flip execACO (stop 100) =<< exec
 \red{\Huge FAIL }
 \medskip
 
-\red{it doesn't work}
+\red{not enough memory}
 \end{center}
 
+\localSectionCmd{\red{Memory usage}}
+ 
+Let's evaluate the number of nodes the problem graph has with
+formula \ref{eq:totalN}.
+
+\emph{At the moment the required classes time isn't used,
+     and every discipline is assigned one fixed class per group.}
+
+\begin{code}
+
+assessEqual theoretical r =
+  let evaluated = domainPower r
+  in  if theoretical /= evaluated
+      then error $ show theoretical ++ " /= " ++ show evaluated
+      else toInteger $ theoretical
+
+
+nClasses = assessEqual  (sum $ map (Set.size . groupDisciplines) dataGroups)
+                        (Role' :: Role' Groups)
+
+nTime = assessEqual  (6 * (22-8) * 2)
+                     (Role' :: Role' DayTime)
+
+nProfessors = assessEqual  (length dataProfessors)
+                           (Role' :: Role' Professors)
+
+nRooms = assessEqual  (length dataRooms)
+                      (Role' :: Role' Classrooms)
+                                       
+\end{code}
+
+\begin{align*}
+ N_\Sigma  &= \NClasses    & % EVALED
+ N_T      &= \NTime       & % EVALED
+ N_P      &= \NProfessors & % EVALED
+ N_R      &= \NRooms        % EVALED
+\end{align*}
+         
+\red{\crule{0.5}}
+
+%{
+%format quot (x) (y) = "\dfrac{" x "}{" y "}" 
+%format * = "\,"
+
+\begin{code}
+fact x = product [1..x]
+\end{code}
+
+\begin{code}
+binom n k = quot (fact n) (fact k * fact (n-k))
+\end{code}
+
+\bigskip
+\begin{code}
+ 
+nCombinations = binom (nClasses + nProfessors -1) (nClasses - 1) * binom (nClasses + nRooms -1) (nClasses - 1) * binom (nClasses + nTime -1) (nClasses - 1) * fact nClasses
+
+\end{code}
+%}
+
+$$= \NCombinations$$
+
+ 
+ 
 %include subfile-end.tex
 
 %%% Local Variables:
 %%% latex-build-command: "lhsTeX"
 %%% lhs-build-standalone-flag: t
 %%% lhs-showframe-flag: t
+%%% lhs-exec-before: ("ACO/UCSP/Test/TestEval1")
 %%% eval: (interactive-haskell-mode)
 %%% eval: (haskell-indentation-mode)
 %%% End:

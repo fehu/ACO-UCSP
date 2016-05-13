@@ -1,0 +1,11 @@
+#!/bin/bash
+
+PROJ_ROOT="$1"
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+cd "$PROJ_ROOT"
+
+runghc `cat "$DIR/ghc-flags"` "$DIR/TestEval1.hs"\
+       "$PROJ_ROOT/tex-build/TestEval1.tex"
+
