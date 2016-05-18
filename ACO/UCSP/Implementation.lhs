@@ -412,6 +412,9 @@ fromUnitInterval (InUnitInterval n) = n
 
 data ForRole v = forall r . (RoleExtra r) => ForRole  (Role' r) [v r]
 
+instance Show (ForRole v) where
+  show (ForRole r _) = "Data for role " ++ show r
+
 forRole vs = ForRole Role' vs
 
 type SomeObligations = [ForRole Obligation]
@@ -469,6 +472,7 @@ data ParamsACO = ParamsACO  {  alpha   :: Float
                             ,  pherQ0  :: Float
                             ,  rho     :: Float
                             }
+  deriving Show
 
 type RelationsACO = (SomeObligations, SomePreferences)
 
@@ -478,12 +482,18 @@ data  PopulationACO = forall gen . RandomGen gen =>
 
 type GenUnique = Bool
 
+instance Show PopulationACO where
+  show (GenPopulation size unique _)  =   "GenPopulation "
+                                      ++  show size
+                                      ++  if unique  then " unique"
+                                                     else ""
+
 
 data ACO = ACO  {  paramsACO      :: ParamsACO
                 ,  relationsACO   :: RelationsACO
                 ,  populationACO  :: PopulationACO
                 }
-
+  deriving Show
 
 -- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
@@ -686,6 +696,7 @@ execACO ex@ExecACO{ exACO=aco, exGraph=graph } stop = result
                                         else  randChoices
                      gdNodes   = Set.toList $ groupsNodes graph
                      (g,rand)  = rand' gen size gdNodes
+                putStrLn "got initial sub-routes"
                 writeIORef genRef g
                 putStrLn "Generated Initial Population" -- DEBUG
                 return $ map (`updRoute` emptyRoute) rand
@@ -715,8 +726,10 @@ execACO ex@ExecACO{ exACO=aco, exGraph=graph } stop = result
 
         routesIO = do  ph  <- currentPheromone graph
                        g0  <- getStdGen
+                       putStrLn "calling iiiinialPopulation (IO)"
                        p0  <- initialPopulation
-
+                       putStrLn $ "Got initialPopulation " ++ show (length p0)
+                       
                        let  next  :: (RandomGen gen, UpdRoute r) =>
                                      (Graph -> NodeSet r) -> gen
                                   ->  [Route] -> (gen, [Route])
@@ -743,8 +756,11 @@ execACO ex@ExecACO{ exACO=aco, exGraph=graph } stop = result
 \item \textbf{Return} best routes \textbf{if} \emph{stop criteria} applies,
 \textbf{go to \ref{it:first-exec}} otherwise.
 \begin{code}
-        result = do  routes <- routesIO
+        result = do  putStrLn "calling routesIO"
+                     routes <- routesIO
+                     putStrLn "Got routes"
                      updateStates routes
+                     putStrLn "updated states"
 
                      stop' <- stop ex
                      if stop'  then  return routes
@@ -814,20 +830,30 @@ newExecACO ::  (  HasDomain GroupsData Group
                ) =>
                ACO -> IO ExecACO
 newExecACO aco = do
-
+  putStrLn "newExecACO"
   let  gs  = mkNodes "G" (Role' :: Role' Groups)
-       ts  = mkNodes "T" (Role' :: Role' DayTime)
-       ps  = mkNodes "P" (Role' :: Role' Professors)
-       rs  = mkNodes "R" (Role' :: Role' Classrooms)
+       ts  = [] -- mkNodes "T" (Role' :: Role' DayTime)
+       ps  = [] -- mkNodes "P" (Role' :: Role' Professors)
+       rs  = [] -- mkNodes "R" (Role' :: Role' Classrooms)
 
-       ks  = concat  [  pairs gs ts
-                     ,  pairs ts ps
-                     ,  pairs ps rs
-                     ]
+       ks  = []
+
+       -- ks  = concat  [  pairs gs ts
+       --               ,  pairs ts ps
+       --               ,  pairs ps rs
+       --               ]  
 
        pairs xs ys = do  x  <- xs
                          y  <- ys
                          return (anyNode x, anyNode y)
+
+  putStrLn $ "G nodes:" ++ show (length gs)
+  putStrLn $ "T nodes:" ++ show (length ts)
+  putStrLn $ "P nodes:" ++ show (length ps)
+  putStrLn $ "R nodes:" ++ show (length rs)
+
+  putStrLn "generating ks pairs"
+  putStrLn $ "ks size = " ++ show (length ks)
 
   cache <- sequence $ do  k <- ks
                           [ (,) k <$> newIORef (Pheromone (pherQ0 (paramsACO aco))) ]

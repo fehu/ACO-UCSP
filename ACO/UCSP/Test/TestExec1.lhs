@@ -85,7 +85,13 @@ Test params:
 \begin{code}
 aco' = aco acoParams1 [] <$> mkAcoPop acoPopulation1
 
-exec = newExecACO =<< aco'
+-- exec = newExecACO =<< aco'
+
+exec = do  putStrLn "getting aco"
+           aco <- aco'
+           putStrLn $ "got aco: " ++ show aco
+           putStrLn "new exec"
+           newExecACO aco
 
 run = flip execACO (stop 100) =<< exec
   
